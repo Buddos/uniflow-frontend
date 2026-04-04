@@ -1,0 +1,17 @@
+import { useAuth } from '@/contexts/AuthContext';
+import { AdminDashboard } from '@/components/dashboards/AdminDashboard';
+import { CodDashboard } from '@/components/dashboards/CodDashboard';
+import { LecturerDashboard } from '@/components/dashboards/LecturerDashboard';
+import { Navigate } from 'react-router-dom';
+
+export default function DashboardPage() {
+  const { user } = useAuth();
+
+  if (user?.role === 'timetabling_admin') return <Navigate to="/admin/consolidation" replace />;
+  if (user?.role === 'class_rep') return <Navigate to="/live-map" replace />;
+  
+  if (user?.role === 'admin') return <AdminDashboard />;
+  if (user?.role === 'cod') return <CodDashboard />;
+  
+  return <LecturerDashboard />;
+}

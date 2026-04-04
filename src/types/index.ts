@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'cod' | 'lecturer';
+export type UserRole = 'admin' | 'cod' | 'lecturer' | 'timetabling_admin' | 'class_rep';
 
 export interface User {
   id: string;
@@ -13,78 +13,98 @@ export interface Venue {
   name: string;
   capacity: number;
   location: string;
-  building: string;
   equipment: string[];
-  resourceHome: string;
   status: 'available' | 'booked' | 'maintenance';
-}
-
-export interface CourseUnit {
-  id: string;
-  code: string;
-  name: string;
-  department: string;
-  creditHours: number;
+  resourceHome?: string;
 }
 
 export interface TimetableSlot {
   id: string;
   day: string;
-  startTime: string;
-  endTime: string;
-  courseUnit: CourseUnit;
-  venue: Venue;
+  timeSlot: string;
+  courseUnit: string;
+  courseCode: string;
+  venue: string;
   lecturer: string;
   department: string;
-  color: string;
+  cohortSize: number;
 }
 
 export interface CourseRequest {
   id: string;
-  courseUnit: CourseUnit;
-  requestingDepartment: string;
-  providingDepartment: string;
+  courseUnit: string;
+  courseCode: string;
+  requestingDept: string;
+  providingDept: string;
   cohortSize: number;
   status: 'pending' | 'accepted' | 'rejected';
-  createdAt: string;
+  requestDate: string;
 }
 
 export interface AcademicTrip {
   id: string;
   cohort: string;
-  courseUnit: string;
+  destination: string;
   startDate: string;
   endDate: string;
-  destination: string;
-  affectedSlots: number;
-  status: 'scheduled' | 'completed' | 'cancelled';
-}
-
-export interface MakeupClass {
-  id: string;
-  courseUnit: string;
-  lecturer: string;
-  date: string;
-  timeSlot: string;
-  venue: string;
-  status: 'pending' | 'confirmed' | 'cancelled';
-}
-
-export interface Equipment {
-  id: string;
-  name: string;
-  type: string;
-  assignedHall: string;
-  resourceHome: string;
-  status: 'available' | 'in-use' | 'maintenance';
-  lastCheckedOut?: string;
+  affectedSlots: string[];
+  department: string;
 }
 
 export interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'request' | 'schedule' | 'alert' | 'info';
+  type: 'request' | 'schedule' | 'alert' | 'info' | 'feedback';
   read: boolean;
-  createdAt: string;
+  timestamp: string;
 }
+
+export interface Equipment {
+  id: string;
+  name: string;
+  type: string;
+  assignedVenue: string;
+  status: 'available' | 'in-use' | 'maintenance';
+  resourceHome: string;
+}
+
+/** COD Submission for semester planning */
+export interface DepartmentSubmission {
+  id: string;
+  department: string;
+  submittedBy: string;
+  submittedDate: string;
+  status: 'draft' | 'submitted' | 'consolidated' | 'published';
+  courseUnits: SubmittedCourseUnit[];
+}
+
+export interface SubmittedCourseUnit {
+  id: string;
+  courseUnit: string;
+  courseCode: string;
+  lecturerName: string;
+  numberOfStudents: number;
+  specialNeeds: string;
+}
+
+/** Feedback from class reps during Week 1 */
+export interface ClassRepFeedback {
+  id: string;
+  courseCode: string;
+  courseUnit: string;
+  venue: string;
+  issue: 'overcrowding' | 'equipment' | 'wrong-venue' | 'scheduling-conflict' | 'other';
+  description: string;
+  reportedBy: string;
+  reportedDate: string;
+  status: 'open' | 'resolved' | 'dismissed';
+}
+
+export type WorkflowPhase =
+  | 'cod-submission'
+  | 'det-consolidation'
+  | 'draft-timetable'
+  | 'feedback-loop'
+  | 'det-adjustments'
+  | 'final-requirements';
