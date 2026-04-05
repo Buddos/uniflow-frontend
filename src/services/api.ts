@@ -11,7 +11,7 @@ import {
 import type { Venue, TimetableSlot, CourseRequest, AcademicTrip, Notification, Equipment } from '@/types';
 
 // Base URL for Java Servlet backend
-const BASE_URL = '/api';
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://uniflow-backend-production.up.railway.app/api';
 
 // Simulated network delay
 const delay = (ms: number = 300) => new Promise(r => setTimeout(r, ms));
