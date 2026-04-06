@@ -1,68 +1,76 @@
+// src/services/api.ts
 /**
  * API Service Layer
  * All data fetching is abstracted here for easy integration with Java Servlet backend.
- * Replace mock imports with actual fetch() calls to REST endpoints.
  */
 
-import {
-  mockVenues, mockTimetable, mockCourseRequests,
-  mockTrips, mockNotifications, mockEquipment
-} from '@/data/mockData';
 import type { Venue, TimetableSlot, CourseRequest, AcademicTrip, Notification, Equipment } from '@/types';
 
 // Base URL for Java Servlet backend
-const BASE_URL = import.meta.env.VITE_API_URL || 'https://uniflow-backend-production.up.railway.app/api';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
-// Simulated network delay
-const delay = (ms: number = 300) => new Promise(r => setTimeout(r, ms));
-
-/** GET /api/venues */
+/** GET /api/venues/all */
 export async function fetchVenues(): Promise<Venue[]> {
-  await delay();
-  // TODO: Replace with fetch(`${BASE_URL}/venues`)
-  return mockVenues;
+  const response = await fetch(`${BASE_URL}/venues/all`);
+  if (!response.ok) throw new Error('Failed to fetch venues');
+  return response.json();
 }
 
 /** GET /api/timetable */
 export async function fetchTimetable(): Promise<TimetableSlot[]> {
-  await delay();
-  return mockTimetable;
+  const response = await fetch(`${BASE_URL}/timetable`);
+  if (!response.ok) throw new Error('Failed to fetch timetable');
+  return response.json();
 }
 
 /** GET /api/requests */
 export async function fetchCourseRequests(): Promise<CourseRequest[]> {
-  await delay();
-  return mockCourseRequests;
+  const response = await fetch(`${BASE_URL}/requests`);
+  if (!response.ok) throw new Error('Failed to fetch course requests');
+  return response.json();
 }
 
 /** POST /api/requests */
 export async function submitCourseRequest(request: Omit<CourseRequest, 'id' | 'status' | 'requestDate'>): Promise<CourseRequest> {
-  await delay(500);
-  return { ...request, id: Date.now().toString(), status: 'pending', requestDate: new Date().toISOString().split('T')[0] };
+  const response = await fetch(`${BASE_URL}/requests`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request)
+  });
+  if (!response.ok) throw new Error('Failed to submit course request');
+  return response.json();
 }
 
 /** GET /api/trips */
 export async function fetchTrips(): Promise<AcademicTrip[]> {
-  await delay();
-  return mockTrips;
+  const response = await fetch(`${BASE_URL}/trips`);
+  if (!response.ok) throw new Error('Failed to fetch trips');
+  return response.json();
 }
 
 /** GET /api/notifications */
 export async function fetchNotifications(): Promise<Notification[]> {
-  await delay();
-  return mockNotifications;
+  const response = await fetch(`${BASE_URL}/notifications`);
+  if (!response.ok) throw new Error('Failed to fetch notifications');
+  return response.json();
 }
 
 /** GET /api/equipment */
 export async function fetchEquipment(): Promise<Equipment[]> {
-  await delay();
-  return mockEquipment;
+  const response = await fetch(`${BASE_URL}/equipment`);
+  if (!response.ok) throw new Error('Failed to fetch equipment');
+  return response.json();
 }
 
-/** POST /api/makeup-booking */
+/** POST /api/bookings */
 export async function bookMakeupClass(booking: { date: string; timeSlot: string; venueId: string }): Promise<{ success: boolean }> {
-  await delay(500);
-  return { success: true };
+  const response = await fetch(`${BASE_URL}/bookings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(booking)
+  });
+  if (!response.ok) throw new Error('Failed to book makeup class');
+  return response.json();
 }
 
 /** POST /api/auth/login */
@@ -73,7 +81,8 @@ export async function loginUser(email: string, password: string): Promise<any> {
     body: JSON.stringify({ email, password })
   });
   if (!response.ok) {
-    throw new Error('Login failed');
+    const errorData = await response.json();
+    throw new Error(errorData.message || errorData.error || 'Login failed');
   }
   return response.json();
 }
@@ -86,7 +95,8 @@ export async function registerUser(user: any): Promise<any> {
     body: JSON.stringify(user)
   });
   if (!response.ok) {
-    throw new Error('Registration failed');
+    const errorData = await response.json();
+    throw new Error(errorData.message || errorData.error || 'Registration failed');
   }
   return response.json();
 }

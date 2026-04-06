@@ -1,25 +1,65 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, CheckCircle, Clock, Plane } from 'lucide-react';
-import { mockCourseRequests, mockTrips, mockNotifications } from '@/data/mockData';
+import { FileText, CheckCircle, Clock, Plane, Plus, Edit, Send, Users2 } from 'lucide-react';
+import { mockCourseRequests, mockTrips, mockNotifications, mockCrossDepartmentRequests } from '@/data/mockData';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 export function CodDashboard() {
   const pending = mockCourseRequests.filter(r => r.status === 'pending').length;
   const accepted = mockCourseRequests.filter(r => r.status === 'accepted').length;
+  const crossDeptRequests = mockCrossDepartmentRequests.filter(r => r.status === 'pending').length;
   const trips = mockTrips.length;
   const unread = mockNotifications.filter(n => !n.read).length;
+
+  const [showRequirementDialog, setShowRequirementDialog] = useState(false);
+  const [useTemplate, setUseTemplate] = useState(false);
+  const [requirements, setRequirements] = useState([
+    { courseUnit: '', courseCode: '', lecturerName: '', numberOfStudents: 0, specialNeeds: '' }
+  ]);
+
+  const handleAddRequirement = () => {
+    setRequirements([...requirements, { courseUnit: '', courseCode: '', lecturerName: '', numberOfStudents: 0, specialNeeds: '' }]);
+  };
+
+  const handleRequirementChange = (index: number, field: string, value: string | number) => {
+    const updated = [...requirements];
+    updated[index] = { ...updated[index], [field]: value };
+    setRequirements(updated);
+  };
+
+  const handleSubmitRequirements = () => {
+    // Here you would typically send to backend
+    toast.success('Requirements submitted successfully to Timetabling Admin!');
+    setShowRequirementDialog(false);
+    setRequirements([{ courseUnit: '', courseCode: '', lecturerName: '', numberOfStudents: 0, specialNeeds: '' }]);
+  };
+
+  const loadLastSemesterTemplate = () => {
+    // Mock template data
+    setRequirements([
+      { courseUnit: 'Data Structures', courseCode: 'CS201', lecturerName: 'Dr. Ochieng', numberOfStudents: 250, specialNeeds: 'Projector required' },
+      { courseUnit: 'Database Systems', courseCode: 'CS301', lecturerName: 'Dr. Wanjiku', numberOfStudents: 180, specialNeeds: 'Lab access needed' },
+      { courseUnit: 'Software Engineering', courseCode: 'CS401', lecturerName: 'Dr. Ochieng', numberOfStudents: 160, specialNeeds: 'Group work spaces' }
+    ]);
+    setUseTemplate(true);
+    toast.info('Last semester template loaded. You can now edit and submit.');
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-heading font-bold text-foreground">COD Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">Department coordination overview</p>
+        <p className="text-muted-foreground text-sm mt-1">Department coordination and requirement submission</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {[
           { label: 'Pending Requests', value: pending, icon: Clock, color: 'text-warning' },
           { label: 'Accepted', value: accepted, icon: CheckCircle, color: 'text-success' },
+          { label: 'Cross-Dept Requests', value: crossDeptRequests, icon: Users2, color: 'text-info' },
           { label: 'Planned Trips', value: trips, icon: Plane, color: 'text-info' },
           { label: 'Unread Alerts', value: unread, icon: FileText, color: 'text-destructive' },
         ].map(s => (
@@ -36,6 +76,161 @@ export function CodDashboard() {
           </Card>
         ))}
       </div>
+
+      {/* Requirement Submission Section */}
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle className="text-lg font-heading flex items-center justify-between">
+            <span>Requirement Elicitation System</span>
+            <Dialog open={showRequirementDialog} onOpenChange={setShowRequirementDialog}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Submit Requirements
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Submit Department Requirements</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-6">
+                  <div className="flex gap-4">
+                    <Button variant="outline" onClick={loadLastSemesterTemplate} className="flex-1">
+                      <Edit className="h-4 w-4 mr-2" />
+                      Use Last Semester Template
+                    </Button>
+                    <Button variant="outline" onClick={() => { setUseTemplate(false); setRequirements([{ courseUnit: '', courseCode: '', lecturerName: '', numberOfStudents: 0, specialNeeds: '' }]); }} className="flex-1">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Start from Scratch
+                    </Button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Course Requirements</h4>
+                    {requirements.map((req, index) => (
+                      <div key={index} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 p-4 border rounded-lg">
+                        <div>
+                          <label className="text-sm font-medium">Course Unit</label>
+                          <input
+                            type="text"
+                            className="w-full mt-1 p-2 border rounded"
+                            value={req.courseUnit}
+                            onChange={(e) => handleRequirementChange(index, 'courseUnit', e.target.value)}
+                            placeholder="e.g., Data Structures"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Course Code</label>
+                          <input
+                            type="text"
+                            className="w-full mt-1 p-2 border rounded"
+                            value={req.courseCode}
+                            onChange={(e) => handleRequirementChange(index, 'courseCode', e.target.value)}
+                            placeholder="e.g., CS201"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Lecturer</label>
+                          <input
+                            type="text"
+                            className="w-full mt-1 p-2 border rounded"
+                            value={req.lecturerName}
+                            onChange={(e) => handleRequirementChange(index, 'lecturerName', e.target.value)}
+                            placeholder="e.g., Dr. Ochieng"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Students</label>
+                          <input
+                            type="number"
+                            className="w-full mt-1 p-2 border rounded"
+                            value={req.numberOfStudents}
+                            onChange={(e) => handleRequirementChange(index, 'numberOfStudents', parseInt(e.target.value) || 0)}
+                            placeholder="150"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Special Needs</label>
+                          <input
+                            type="text"
+                            className="w-full mt-1 p-2 border rounded"
+                            value={req.specialNeeds}
+                            onChange={(e) => handleRequirementChange(index, 'specialNeeds', e.target.value)}
+                            placeholder="Projector, Lab access, etc."
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-4">
+                    <Button onClick={handleAddRequirement} variant="outline" className="flex-1">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Another Course
+                    </Button>
+                    <Button onClick={handleSubmitRequirements} className="flex-1">
+                      <Send className="h-4 w-4 mr-2" />
+                      Submit to Timetabling Admin
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center p-4 bg-primary/5 rounded-lg">
+              <FileText className="h-8 w-8 text-primary mx-auto mb-2" />
+              <h4 className="font-medium">Template-Based</h4>
+              <p className="text-sm text-muted-foreground">Use last semester's requirements as starting point</p>
+            </div>
+            <div className="text-center p-4 bg-primary/5 rounded-lg">
+              <Users2 className="h-8 w-8 text-primary mx-auto mb-2" />
+              <h4 className="font-medium">Cross-Department</h4>
+              <p className="text-sm text-muted-foreground">Incorporate requests from other departments</p>
+            </div>
+            <div className="text-center p-4 bg-primary/5 rounded-lg">
+              <Send className="h-8 w-8 text-primary mx-auto mb-2" />
+              <h4 className="font-medium">Direct Submission</h4>
+              <p className="text-sm text-muted-foreground">Submit compiled requirements to timetabling admin</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Cross-Department Requests Section */}
+      <Card className="shadow-card">
+        <CardHeader>
+          <CardTitle className="text-lg font-heading">Cross-Department Course Requests</CardTitle>
+          <p className="text-sm text-muted-foreground">Requests from other departments for your courses</p>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {mockCrossDepartmentRequests.map((request, index) => (
+              <div key={request.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex-1">
+                  <h4 className="font-medium">{request.courseUnit}</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Requested by {request.requesterName} from {request.requestingDepartment} • {request.numberOfStudents} students
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant={request.status === 'accepted' ? 'default' : 'secondary'}>
+                    {request.status}
+                  </Badge>
+                  {request.status === 'pending' && (
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline">Accept</Button>
+                      <Button size="sm" variant="outline">Decline</Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="shadow-card">

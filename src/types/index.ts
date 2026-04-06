@@ -88,6 +88,19 @@ export interface SubmittedCourseUnit {
   specialNeeds: string;
 }
 
+/** Cross-department course requests */
+export interface CrossDepartmentRequest {
+  id: string;
+  requestingDepartment: string;
+  providingDepartment: string;
+  courseUnit: string;
+  courseCode: string;
+  requesterName: string;
+  numberOfStudents: number;
+  status: 'pending' | 'accepted' | 'declined';
+  requestDate: string;
+}
+
 /** Feedback from class reps during Week 1 */
 export interface ClassRepFeedback {
   id: string;

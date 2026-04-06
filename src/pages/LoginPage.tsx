@@ -34,12 +34,12 @@ export default function LoginPage() {
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const success = await register(regName, regEmail, regPassword, regRole);
+    const result = await register(regName, regEmail, regPassword, regRole);
     setLoading(false);
-    if (success) {
-      toast.success("Successfully registered and logged in!");
+    if (result.success) {
+      toast.success(result.message || "Successfully created an account!");
     } else {
-      toast.error("Error during registration. Please try again.");
+      toast.error(result.message || "Error during registration. Please try again.");
     }
   };
 
@@ -113,7 +113,7 @@ export default function LoginPage() {
                         <SelectItem value="TIMETABLING_ADMIN">Timetabling Admin</SelectItem>
                         <SelectItem value="COD">Head of Department (COD)</SelectItem>
                         <SelectItem value="LECTURER">Lecturer</SelectItem>
-                        <SelectItem value="CLASS_REP">Class Rep (Issue Reporter Only)</SelectItem>
+                        <SelectItem value="CLASS_REP">Class Rep</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

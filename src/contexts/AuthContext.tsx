@@ -5,7 +5,7 @@ import { loginUser, registerUser } from '@/services/api';
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, password: string, role: string) => Promise<boolean>;
+  register: (name: string, email: string, password: string, role: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -32,20 +32,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (name: string, email: string, password: string, role: string): Promise<boolean> => {
+  const register = async (name: string, email: string, password: string, role: string): Promise<{ success: boolean; message?: string }> => {
     try {
-      const registeredUser = await registerUser({ name, email, password, role: role.toUpperCase() });
-      if (registeredUser && registeredUser.id) {
+      const response = await registerUser({ name, email, password, role: role.toUpperCase() });
+      if (response && response.success && response.user && response.user.id) {
         setUser({
-          ...registeredUser,
-          role: registeredUser.role.toLowerCase() as UserRole
+          ...response.user,
+          role: response.user.role.toLowerCase() as UserRole
         });
-        return true;
+        return { success: true, message: response.message || 'Account created successfully' };
       }
-      return false;
-    } catch (e) {
+      return { success: false, message: 'Registration failed' };
+    } catch (e: any) {
       console.error('Registration error:', e);
-      return false;
+      return { success: false, message: e.message || 'Registration failed' };
     }
   };
 

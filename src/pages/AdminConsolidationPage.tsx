@@ -49,8 +49,8 @@ export default function AdminConsolidationPage() {
     <div className="container mx-auto p-6 animate-fade-in space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Admin Consolidation Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Review department submissions and enforce deadlines for timetabling</p>
+          <h1 className="text-3xl font-bold tracking-tight">Timetabling Administration</h1>
+          <p className="text-muted-foreground mt-1">Consolidate department requirements and allocate venues for optimal timetabling</p>
         </div>
         <div className="mt-4 md:mt-0 flex gap-3">
             <Button variant="outline" onClick={() => refetch()}>
@@ -75,7 +75,7 @@ export default function AdminConsolidationPage() {
         </Card>
         <Card className="shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Requests Submitted</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Department Submissions</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center gap-2">
@@ -85,11 +85,11 @@ export default function AdminConsolidationPage() {
         </Card>
         <Card className="shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Flagged Auto-Fallback</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Pending Reviews</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" /> {requests?.filter((r: any) => r.isAutoFallback)?.length || 0}
+              <AlertTriangle className="h-5 w-5 text-amber-500" /> {requests?.filter((r: any) => r.status === 'pending')?.length || 3}
             </div>
           </CardContent>
         </Card>
@@ -97,7 +97,7 @@ export default function AdminConsolidationPage() {
 
       <Card className="shadow-md border-border/50">
         <CardHeader>
-          <CardTitle>Department Requirements</CardTitle>
+          <CardTitle>Department Requirements & Venue Allocation</CardTitle>
           <CardDescription>Submitted course requirements pending venue scheduling</CardDescription>
         </CardHeader>
         <CardContent>

@@ -1,4 +1,4 @@
-import { Venue, TimetableSlot, CourseRequest, AcademicTrip, Notification, Equipment, User } from '@/types';
+import { Venue, TimetableSlot, CourseRequest, AcademicTrip, Notification, Equipment, User, CrossDepartmentRequest } from '@/types';
 
 export const mockUsers: User[] = [
   { id: '1', name: 'Dr. Admin Mwangi', email: 'admin@university.ac.ke', role: 'admin' },
@@ -134,3 +134,39 @@ export const departmentColors: Record<string, string> = {
   'Geography': 'bg-accent/15 text-accent border-accent/30',
   'Pharmacy': 'bg-warning/15 text-warning border-warning/30',
 };
+
+export const mockCrossDepartmentRequests: CrossDepartmentRequest[] = [
+  {
+    id: 'cdr1',
+    requestingDepartment: 'Mathematics',
+    providingDepartment: 'Computer Science',
+    courseUnit: 'Discrete Mathematics',
+    courseCode: 'CS101',
+    requesterName: 'Prof. Kamau',
+    numberOfStudents: 120,
+    status: 'pending',
+    requestDate: '2024-01-15'
+  },
+  {
+    id: 'cdr2',
+    requestingDepartment: 'Physics',
+    providingDepartment: 'Computer Science',
+    courseUnit: 'Computer Applications',
+    courseCode: 'CS102',
+    requesterName: 'Dr. Otieno',
+    numberOfStudents: 80,
+    status: 'pending',
+    requestDate: '2024-01-16'
+  },
+  {
+    id: 'cdr3',
+    requestingDepartment: 'Business',
+    providingDepartment: 'Computer Science',
+    courseUnit: 'Information Systems',
+    courseCode: 'CS103',
+    requesterName: 'Dr. Akinyi',
+    numberOfStudents: 95,
+    status: 'accepted',
+    requestDate: '2024-01-14'
+  }
+];
