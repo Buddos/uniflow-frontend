@@ -64,13 +64,13 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-hidden selection:bg-primary selection:text-primary-foreground">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100 text-foreground overflow-hidden selection:bg-primary selection:text-primary-foreground">
       {/* Background aesthetics */}
-      <div className="absolute top-[-10%] sm:top-[-20%] left-[-10%] sm:left-[-20%] w-[50%] h-[50%] rounded-full bg-primary/20 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] sm:bottom-[-20%] right-[-10%] sm:right-[-20%] w-[50%] h-[50%] rounded-full bg-primary/20 blur-[120px] pointer-events-none" />
+      <div className="absolute top-[-10%] sm:top-[-20%] left-[-10%] sm:left-[-20%] w-[50%] h-[50%] rounded-full bg-blue-200/30 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] sm:bottom-[-20%] right-[-10%] sm:right-[-20%] w-[50%] h-[50%] rounded-full bg-purple-200/30 blur-[120px] pointer-events-none" />
       
       {/* Navbar */}
-      <nav className="container mx-auto px-6 py-4 flex items-center justify-between relative z-10 border-b border-border/40 backdrop-blur-sm sticky top-0 bg-background/80">
+      <nav className="container mx-auto px-6 py-4 flex items-center justify-between relative z-10 border-b border-slate-200/50 backdrop-blur-sm sticky top-0 bg-white/80">
         <div className="flex items-center gap-2 text-primary">
           <GraduationCap className="h-8 w-8" />
           <span className="text-2xl font-bold tracking-tight text-foreground">UniFlow</span>
@@ -105,93 +105,96 @@ export default function Index() {
         </section>
 
         {/* Requirement Elicitation Section */}
-        <section className="max-w-6xl mx-auto space-y-12 animate-fade-in fade-in-0 duration-700 delay-200">
-          <div className="text-center space-y-4">
-            <div className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-sm text-primary mb-2 shadow-sm ring-1 ring-primary/20">
-              <span className="flex h-2 w-2 rounded-full bg-primary mr-2 animate-pulse" />
+        <section className="max-w-6xl mx-auto space-y-16 animate-fade-in fade-in-0 duration-700 delay-200">
+          <div className="text-center space-y-6">
+            <div className="inline-flex items-center rounded-full border border-blue-300/50 bg-gradient-to-r from-blue-50 to-cyan-50 px-4 py-2 text-sm font-semibold text-blue-700 mb-2 shadow-sm ring-1 ring-blue-200/50">
+              <span className="flex h-2 w-2 rounded-full bg-blue-600 mr-3 animate-pulse" />
               Requirement Elicitation System
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">
+            <h2 className="text-4xl sm:text-5xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-purple-700 to-blue-900">
               Streamlined Academic Planning
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
               A comprehensive platform for Course of Department (COD) submissions and Class Representative issue reporting to ensure optimal timetabling and venue allocation.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div className="space-y-6">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-5">
               <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="p-2 bg-primary/10 text-primary rounded-lg">
-                    <FileText className="h-5 w-5" />
+                <div className="flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-50/50 border border-blue-200/50 hover:border-blue-300/80 transition-all hover:shadow-lg hover:-translate-y-1">
+                  <div className="p-3 bg-gradient-to-br from-blue-500 to-cyan-500 text-white rounded-xl flex-shrink-0 shadow-lg">
+                    <FileText className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground">COD Requirements Submission</h3>
-                    <p className="text-muted-foreground">
+                    <h3 className="text-lg font-bold text-slate-900">COD Requirements Submission</h3>
+                    <p className="text-slate-600 text-sm leading-relaxed mt-1">
                       Submit department course requirements using last semester templates or start fresh. Include course units, student numbers, and special needs.
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4">
-                  <div className="p-2 bg-primary/10 text-primary rounded-lg">
-                    <Users2 className="h-5 w-5" />
+                <div className="flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-br from-purple-50 to-purple-50/50 border border-purple-200/50 hover:border-purple-300/80 transition-all hover:shadow-lg hover:-translate-y-1">
+                  <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 text-white rounded-xl flex-shrink-0 shadow-lg">
+                    <Users2 className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground">Cross-Department Requests</h3>
-                    <p className="text-muted-foreground">
+                    <h3 className="text-lg font-bold text-slate-900">Cross-Department Requests</h3>
+                    <p className="text-slate-600 text-sm leading-relaxed mt-1">
                       Receive and manage course unit requests from other departments. Compile all requirements before submission deadlines.
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4">
-                  <div className="p-2 bg-primary/10 text-primary rounded-lg">
-                    <Send className="h-5 w-5" />
+                <div className="flex items-start gap-4 p-5 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-50/50 border border-amber-200/50 hover:border-amber-300/80 transition-all hover:shadow-lg hover:-translate-y-1">
+                  <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-500 text-white rounded-xl flex-shrink-0 shadow-lg">
+                    <Send className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground">Class Representative Issues</h3>
-                    <p className="text-muted-foreground">
+                    <h3 className="text-lg font-bold text-slate-900">Class Representative Issues</h3>
+                    <p className="text-slate-600 text-sm leading-relaxed mt-1">
                       Report real-time class issues including overcrowding, equipment problems, and scheduling conflicts for immediate resolution.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <Button size="lg" variant="outline" className="flex-1 h-12 rounded-full bg-background/50 backdrop-blur border-border/50 hover:bg-muted/50" onClick={openLogin}>
+              <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                <Button size="lg" className="flex-1 h-12 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all" onClick={openLogin}>
+                  <Users className="h-5 w-5 mr-2" />
                   Access COD Portal
                 </Button>
-                <Button size="lg" variant="outline" className="flex-1 h-12 rounded-full bg-background/50 backdrop-blur border-border/50 hover:bg-muted/50" onClick={openRegister}>
+                <Button size="lg" className="flex-1 h-12 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all" onClick={openRegister}>
+                  <Users className="h-5 w-5 mr-2" />
                   Register as Class Rep
                 </Button>
               </div>
             </div>
 
             <div className="relative">
-              <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-3xl p-8 border border-border/50 backdrop-blur-sm">
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-300 via-purple-300 to-pink-300 rounded-3xl blur-2xl opacity-20" />
+              <div className="relative bg-white rounded-3xl p-8 border border-slate-200/80 shadow-2xl">
                 <div className="space-y-6">
                   <div className="text-center">
-                    <h4 className="text-xl font-semibold text-foreground mb-2">Submission Workflow</h4>
-                    <p className="text-sm text-muted-foreground">End-to-end requirement management</p>
+                    <h4 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 mb-2">Submission Workflow</h4>
+                    <p className="text-sm text-slate-600 font-medium">End-to-end requirement management</p>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {[
-                      { step: '1', title: 'COD Preparation', desc: 'Use templates or create new requirements' },
-                      { step: '2', title: 'Cross-Department Review', desc: 'Review and incorporate requests from other departments' },
-                      { step: '3', title: 'Submission to Timetabling', desc: 'Submit compiled requirements before deadline' },
-                      { step: '4', title: 'Timetabling & Allocation', desc: 'Admin processes and allocates venues' },
-                      { step: '5', title: 'Class Rep Feedback', desc: 'Monitor and report any issues during execution' }
+                      { step: '1', title: 'COD Preparation', desc: 'Use templates or create new requirements', color: 'from-blue-500 to-cyan-500' },
+                      { step: '2', title: 'Cross-Department Review', desc: 'Review and incorporate requests from other departments', color: 'from-purple-500 to-pink-500' },
+                      { step: '3', title: 'Submission to Timetabling', desc: 'Submit compiled requirements before deadline', color: 'from-amber-500 to-orange-500' },
+                      { step: '4', title: 'Timetabling & Allocation', desc: 'Admin processes and allocates venues', color: 'from-green-500 to-emerald-500' },
+                      { step: '5', title: 'Class Rep Feedback', desc: 'Monitor and report any issues during execution', color: 'from-red-500 to-pink-500' }
                     ].map((item, i) => (
-                      <div key={i} className="flex items-center gap-4 p-3 rounded-lg bg-background/50 border border-border/30">
-                        <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
+                      <div key={i} className="flex items-center gap-4 p-4 rounded-xl bg-slate-50/80 border border-slate-200/60 hover:border-slate-300/80 transition-all hover:shadow-md">
+                        <div className={`w-10 h-10 bg-gradient-to-br ${item.color} text-white rounded-full flex items-center justify-center text-sm font-bold shadow-lg flex-shrink-0`}>
                           {item.step}
                         </div>
                         <div>
-                          <h5 className="font-medium text-foreground">{item.title}</h5>
-                          <p className="text-sm text-muted-foreground">{item.desc}</p>
+                          <h5 className="font-bold text-slate-900">{item.title}</h5>
+                          <p className="text-sm text-slate-600 leading-relaxed">{item.desc}</p>
                         </div>
                       </div>
                     ))}
@@ -203,35 +206,54 @@ export default function Index() {
         </section>
 
         {/* Features Grid */}
-        <section className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-20">
+        <section className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-20">
           {[
             {
               icon: <FileText className="h-6 w-6" />,
               title: "Requirement Elicitation",
-              desc: "CODs submit course requirements using templates or fresh submissions for optimal timetabling."
+              desc: "CODs submit course requirements using templates or fresh submissions for optimal timetabling.",
+              gradient: 'from-blue-50 to-blue-50/50',
+              borderColor: 'border-blue-200/50',
+              iconGradient: 'from-blue-500 to-cyan-500',
+              hoverBorder: 'hover:border-blue-300/80'
             },
             {
               icon: <Users2 className="h-6 w-6" />,
               title: "Cross-Department Coordination",
-              desc: "Manage course unit requests between departments and compile comprehensive submissions."
+              desc: "Manage course unit requests between departments and compile comprehensive submissions.",
+              gradient: 'from-purple-50 to-purple-50/50',
+              borderColor: 'border-purple-200/50',
+              iconGradient: 'from-purple-500 to-pink-500',
+              hoverBorder: 'hover:border-purple-300/80'
             },
             {
               icon: <Send className="h-6 w-6" />,
               title: "Issue Reporting System",
-              desc: "Class representatives report real-time issues for immediate resolution and venue adjustments."
+              desc: "Class representatives report real-time issues for immediate resolution and venue adjustments.",
+              gradient: 'from-amber-50 to-amber-50/50',
+              borderColor: 'border-amber-200/50',
+              iconGradient: 'from-amber-500 to-orange-500',
+              hoverBorder: 'hover:border-amber-300/80'
             },
             {
               icon: <CalendarDays className="h-6 w-6" />,
               title: "Timetabling & Allocation",
-              desc: "Automated venue allocation and conflict resolution based on submitted requirements."
+              desc: "Automated venue allocation and conflict resolution based on submitted requirements.",
+              gradient: 'from-green-50 to-green-50/50',
+              borderColor: 'border-green-200/50',
+              iconGradient: 'from-green-500 to-emerald-500',
+              hoverBorder: 'hover:border-green-300/80'
             }
           ].map((feat, i) => (
-            <div key={i} className="group relative p-6 bg-card/60 rounded-3xl border border-border/50 shadow-sm hover:shadow-md transition-all hover:bg-card/80 backdrop-blur-sm overflow-hidden flex flex-col items-start text-left">
-              <div className="p-3 bg-primary/10 text-primary rounded-2xl mb-4 group-hover:scale-110 transition-transform">
+            <div key={i} className={`group relative p-7 bg-gradient-to-br ${feat.gradient} rounded-2xl border ${feat.borderColor} ${feat.hoverBorder} shadow-md hover:shadow-2xl transition-all overflow-hidden flex flex-col items-start text-left`}>
+              <div className={`p-3 bg-gradient-to-br ${feat.iconGradient} text-white rounded-xl mb-4 group-hover:scale-110 transition-transform shadow-lg`}>
                 {feat.icon}
               </div>
-              <h3 className="text-xl font-semibold mb-2">{feat.title}</h3>
-              <p className="text-muted-foreground">{feat.desc}</p>
+              <h3 className="text-lg font-bold text-slate-900 mb-3">{feat.title}</h3>
+              <p className="text-slate-600 text-sm leading-relaxed">{feat.desc}</p>
+              <div className="mt-auto w-full pt-4">
+                <div className="h-1 bg-gradient-to-r opacity-0 from-slate-200 to-slate-100 group-hover:opacity-100 transition-opacity rounded-full" />
+              </div>
             </div>
           ))}
         </section>

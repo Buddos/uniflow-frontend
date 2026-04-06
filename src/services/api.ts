@@ -7,7 +7,7 @@
 import type { Venue, TimetableSlot, CourseRequest, AcademicTrip, Notification, Equipment } from '@/types';
 
 // Base URL for Java Servlet backend
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081/api';
 
 /** GET /api/venues/all */
 export async function fetchVenues(): Promise<Venue[]> {
