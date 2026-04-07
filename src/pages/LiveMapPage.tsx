@@ -1,12 +1,30 @@
-import { useState } from 'react';
-import { mockVenues } from '@/data/mockData';
+import { useState, useEffect } from 'react';
+import { fetchVenues } from '@/services/api';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { Venue } from '@/types';
 
 export default function LiveMapPage() {
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [simulate, setSimulate] = useState(false);
 
-  const venues = mockVenues.map(v => {
+  useEffect(() => {
+    fetchVenues()
+      .then(data => {
+        setVenues(data);
+        setError(null);
+      })
+      .catch(err => {
+        console.error('Failed to fetch venues:', err.message);
+        setError('Failed to load venues');
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const displayVenues = venues.map(v => {
     if (!simulate) return v;
     // Toggle some statuses for demo
     const rand = Math.random();
@@ -21,33 +39,43 @@ export default function LiveMapPage() {
           <p className="text-muted-foreground text-sm mt-1">Real-time venue availability overview</p>
         </div>
         <div className="flex items-center gap-2">
-          <Switch id="simulate" checked={simulate} onCheckedChange={setSimulate} />
+          <Switch id="simulate" checked={simulate} onCheckedChange={setSimulate} disabled={loading} />
           <Label htmlFor="simulate" className="text-sm text-muted-foreground">Simulate Live Updates</Label>
         </div>
       </div>
 
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       {/* Group by location */}
       {['Block A', 'Block B', 'Main Campus', 'Education Block'].map(loc => {
-        const locVenues = venues.filter(v => v.location === loc);
+        const locVenues = displayVenues.filter(v => v.location === loc);
         if (locVenues.length === 0) return null;
         return (
           <div key={loc}>
             <h2 className="text-sm font-heading font-semibold text-muted-foreground mb-3">{loc}</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {locVenues.map(v => (
-                <div
-                  key={v.id}
-                  className={`p-4 rounded-lg border-2 transition-all ${
-                    v.status === 'available'
-                      ? 'border-success/40 bg-success/5'
-                      : v.status === 'booked'
-                      ? 'border-destructive/40 bg-destructive/5'
-                      : 'border-warning/40 bg-warning/5'
-                  }`}
-                >
-                  <p className="font-heading font-bold text-foreground">{v.name}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{v.capacity} seats</p>
-                  <div className="mt-2 flex items-center gap-1.5">
+              {loading
+                ? Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-24 rounded-lg" />
+                ))
+                : locVenues.map(v => (
+                  <div
+                    key={v.id}
+                    className={`p-4 rounded-lg border-2 transition-all ${
+                      v.status === 'available'
+                        ? 'border-success/40 bg-success/5'
+                        : v.status === 'booked'
+                        ? 'border-destructive/40 bg-destructive/5'
+                        : 'border-warning/40 bg-warning/5'
+                    }`}
+                  >
+                    <p className="font-heading font-bold text-foreground">{v.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1">{v.capacity} seats</p>
+                    <div className="mt-2 flex items-center gap-1.5">
                     <div className={`w-2 h-2 rounded-full ${
                       v.status === 'available' ? 'bg-success' : v.status === 'booked' ? 'bg-destructive' : 'bg-warning'
                     }`} />

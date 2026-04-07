@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { mockVenues, timeSlots } from '@/data/mockData';
+import { useState, useEffect } from 'react';
+import { fetchVenues, bookMakeupClass } from '@/services/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,21 +8,57 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { BookOpen, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import type { Venue } from '@/types';
+
+const timeSlots = ['7:00-9:00', '9:00-11:00', '11:00-1:00', '2:00-4:00', '4:00-6:00'];
 
 export default function MakeupPage() {
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [date, setDate] = useState('');
   const [timeSlot, setTimeSlot] = useState('');
   const [selectedVenue, setSelectedVenue] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const availableVenues = mockVenues.filter(v => v.status === 'available');
+  useEffect(() => {
+    fetchVenues()
+      .then(data => {
+        setVenues(data);
+        setError(null);
+      })
+      .catch(err => {
+        console.error('Failed to fetch venues:', err.message);
+        setError('Failed to load venues. Please try again later.');
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
-  const handleBook = () => {
-    setConfirmOpen(false);
-    toast.success(`Makeup class booked: ${selectedVenue} on ${date} at ${timeSlot}`);
-    setDate('');
-    setTimeSlot('');
-    setSelectedVenue('');
+  const availableVenues = venues.filter(v => v.status === 'available');
+
+  const handleBook = async () => {
+    setSubmitting(true);
+    try {
+      const venueId = venues.find(v => v.name === selectedVenue)?.id;
+      if (!venueId) throw new Error('Venue not found');
+      
+      await bookMakeupClass({
+        date,
+        timeSlot,
+        venueId,
+      });
+      setConfirmOpen(false);
+      toast.success(`Makeup class booked: ${selectedVenue} on ${date} at ${timeSlot}`);
+      setDate('');
+      setTimeSlot('');
+      setSelectedVenue('');
+    } catch (err) {
+      console.error('Failed to book venue:', err);
+      toast.error('Failed to book venue. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -31,6 +67,12 @@ export default function MakeupPage() {
         <h1 className="text-2xl font-heading font-bold text-foreground">Book Makeup Class</h1>
         <p className="text-muted-foreground text-sm mt-1">Find available venues and schedule makeup sessions</p>
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       <Card className="shadow-card max-w-lg">
         <CardContent className="pt-6 space-y-4">
@@ -49,18 +91,21 @@ export default function MakeupPage() {
           </div>
           <div className="space-y-1">
             <Label>Available Venue</Label>
-            <Select value={selectedVenue} onValueChange={setSelectedVenue}>
-              <SelectTrigger><SelectValue placeholder="Select venue" /></SelectTrigger>
+            <Select value={selectedVenue} onValueChange={setSelectedVenue} disabled={loading}>
+              <SelectTrigger><SelectValue placeholder={loading ? 'Loading venues...' : 'Select venue'} /></SelectTrigger>
               <SelectContent>
                 {availableVenues.map(v => (
                   <SelectItem key={v.id} value={v.name}>{v.name} ({v.capacity} seats)</SelectItem>
                 ))}
+                {!loading && availableVenues.length === 0 && (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">No available venues</div>
+                )}
               </SelectContent>
             </Select>
           </div>
           <Button
             className="w-full gradient-primary text-primary-foreground"
-            disabled={!date || !timeSlot || !selectedVenue}
+            disabled={!date || !timeSlot || !selectedVenue || loading}
             onClick={() => setConfirmOpen(true)}
           >
             <BookOpen className="w-4 h-4 mr-2" /> Book Venue

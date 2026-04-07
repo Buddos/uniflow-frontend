@@ -1,18 +1,41 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, CheckCircle, AlertTriangle, Clock, ClipboardList, ArrowRight } from 'lucide-react';
-import { mockVenues, mockCourseRequests, mockDepartmentSubmissions } from '@/data/mockData';
+import { fetchVenues, fetchCourseRequests, fetchDepartmentSubmissions } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
+import type { Venue, CourseRequest, DepartmentSubmission } from '@/types';
 
 export function AdminDashboard() {
   const navigate = useNavigate();
-  const totalVenues = mockVenues.length;
-  const available = mockVenues.filter(v => v.status === 'available').length;
-  const booked = mockVenues.filter(v => v.status === 'booked').length;
-  const pending = mockCourseRequests.filter(r => r.status === 'pending').length;
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [courseRequests, setCourseRequests] = useState<CourseRequest[]>([]);
+  const [submissions, setSubmissions] = useState<DepartmentSubmission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const submissions = mockDepartmentSubmissions;
+  useEffect(() => {
+    Promise.all([fetchVenues(), fetchCourseRequests(), fetchDepartmentSubmissions()])
+      .then(([venuesData, requestsData, submissionsData]) => {
+        setVenues(venuesData);
+        setCourseRequests(requestsData);
+        setSubmissions(submissionsData);
+        setError(null);
+      })
+      .catch(err => {
+        console.error('Failed to fetch dashboard data:', err.message);
+        setError('Failed to load dashboard data');
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const totalVenues = venues.length;
+  const available = venues.filter(v => v.status === 'available').length;
+  const booked = venues.filter(v => v.status === 'booked').length;
+  const pending = courseRequests.filter(r => r.status === 'pending').length;
+
   const submitted = submissions.filter(s => s.status === 'submitted' || s.status === 'consolidated');
   const drafts = submissions.filter(s => s.status === 'draft');
   const totalUnits = submissions.reduce((sum, s) => sum + s.courseUnits.length, 0);
@@ -31,20 +54,38 @@ export function AdminDashboard() {
         <p className="text-muted-foreground text-sm mt-1">Directorate of Examination & Timetabling</p>
       </div>
 
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map(s => (
-          <Card key={s.label} className="shadow-card">
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{s.label}</p>
-                  <p className="text-3xl font-heading font-bold text-foreground mt-1">{s.value}</p>
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="shadow-card">
+              <CardContent className="pt-5 pb-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-8 w-16" />
                 </div>
-                <s.icon className={`w-10 h-10 ${s.color} opacity-80`} />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))
+          : stats.map(s => (
+            <Card key={s.label} className="shadow-card">
+              <CardContent className="pt-5 pb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">{s.label}</p>
+                    <p className="text-3xl font-heading font-bold text-foreground mt-1">{s.value}</p>
+                  </div>
+                  <s.icon className={`w-10 h-10 ${s.color} opacity-80`} />
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        }
       </div>
 
       {/* COD Submissions Overview */}
@@ -72,20 +113,32 @@ export function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {submissions.map(s => (
-                  <tr key={s.id} className="border-t border-border/50 hover:bg-secondary/30 transition-colors">
-                    <td className="p-2 font-medium text-foreground">{s.department}</td>
-                    <td className="p-2 text-muted-foreground">{s.submittedBy}</td>
-                    <td className="p-2 text-foreground">{s.courseUnits.length}</td>
-                    <td className="p-2 text-foreground">{s.courseUnits.reduce((a, u) => a + u.numberOfStudents, 0)}</td>
-                    <td className="p-2 text-muted-foreground">{s.submittedDate || '—'}</td>
-                    <td className="p-2">
-                      <Badge variant={s.status === 'submitted' ? 'default' : 'secondary'}>
-                        {s.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
+                {loading
+                  ? Array.from({ length: 3 }).map((_, i) => (
+                    <tr key={i} className="border-t border-border/50">
+                      <td className="p-2"><Skeleton className="h-4 w-32" /></td>
+                      <td className="p-2"><Skeleton className="h-4 w-24" /></td>
+                      <td className="p-2"><Skeleton className="h-4 w-8" /></td>
+                      <td className="p-2"><Skeleton className="h-4 w-12" /></td>
+                      <td className="p-2"><Skeleton className="h-4 w-20" /></td>
+                      <td className="p-2"><Skeleton className="h-6 w-20" /></td>
+                    </tr>
+                  ))
+                  : submissions.map(s => (
+                    <tr key={s.id} className="border-t border-border/50 hover:bg-secondary/30 transition-colors">
+                      <td className="p-2 font-medium text-foreground">{s.department}</td>
+                      <td className="p-2 text-muted-foreground">{s.submittedBy}</td>
+                      <td className="p-2 text-foreground">{s.courseUnits.length}</td>
+                      <td className="p-2 text-foreground">{s.courseUnits.reduce((a, u) => a + u.numberOfStudents, 0)}</td>
+                      <td className="p-2 text-muted-foreground">{s.submittedDate || '—'}</td>
+                      <td className="p-2">
+                        <Badge variant={s.status === 'submitted' ? 'default' : 'secondary'}>
+                          {s.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))
+                }
               </tbody>
             </table>
           </div>
@@ -93,7 +146,7 @@ export function AdminDashboard() {
       </Card>
 
       {/* Pending alert */}
-      {drafts.length > 0 && (
+      {!loading && drafts.length > 0 && (
         <Card className="shadow-card border-l-4 border-l-warning">
           <CardContent className="py-4">
             <div className="flex items-center gap-3">
@@ -134,23 +187,34 @@ export function AdminDashboard() {
             <CardTitle className="text-base font-heading">Venue Utilization</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {[
-                { label: 'Available', count: available, total: totalVenues, barClass: 'bg-success' },
-                { label: 'Booked', count: booked, total: totalVenues, barClass: 'bg-warning' },
-                { label: 'Maintenance', count: totalVenues - available - booked, total: totalVenues, barClass: 'bg-destructive' },
-              ].map(b => (
-                <div key={b.label}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-muted-foreground">{b.label}</span>
-                    <span className="font-medium text-foreground">{b.count}/{b.total}</span>
+            {loading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i}>
+                    <Skeleton className="h-4 w-20 mb-2" />
+                    <Skeleton className="h-2 w-full" />
                   </div>
-                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                    <div className={`h-full ${b.barClass} rounded-full transition-all`} style={{ width: `${(b.count / b.total) * 100}%` }} />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {[
+                  { label: 'Available', count: available, total: totalVenues, barClass: 'bg-success' },
+                  { label: 'Booked', count: booked, total: totalVenues, barClass: 'bg-warning' },
+                  { label: 'Maintenance', count: totalVenues - available - booked, total: totalVenues, barClass: 'bg-destructive' },
+                ].map(b => (
+                  <div key={b.label}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-muted-foreground">{b.label}</span>
+                      <span className="font-medium text-foreground">{b.count}/{b.total}</span>
+                    </div>
+                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                      <div className={`h-full ${b.barClass} rounded-full transition-all`} style={{ width: `${(b.count / b.total) * 100}%` }} />
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,15 +8,20 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockDepartmentSubmissions, mockClassRepFeedback, mockVenues } from '@/data/mockData';
-import { departments } from '@/data/mockData';
+import { fetchDepartmentSubmissions, fetchClassRepFeedback, fetchVenues } from '@/services/api';
 import { toast } from 'sonner';
-import type { WorkflowPhase, DepartmentSubmission, SubmittedCourseUnit, ClassRepFeedback } from '@/types';
+import type { WorkflowPhase, DepartmentSubmission, SubmittedCourseUnit, ClassRepFeedback, Venue } from '@/types';
 import {
   ClipboardList, Database, FileSpreadsheet, MessageSquare,
   Settings2, CheckCircle2, ChevronRight, Plus, AlertTriangle,
   Send, Eye, ArrowRight,
 } from 'lucide-react';
+
+const departments = [
+  'Computer Science', 'Mathematics', 'Physics', 'Chemistry',
+  'Agriculture', 'Engineering', 'Education', 'Economics',
+  'Geography', 'Pharmacy',
+];
 
 const phases: { key: WorkflowPhase; label: string; icon: React.ElementType; description: string }[] = [
   { key: 'cod-submission', label: 'COD Submission', icon: ClipboardList, description: 'CODs provide course units, students, lecturers & special needs' },
@@ -30,10 +35,32 @@ const phases: { key: WorkflowPhase; label: string; icon: React.ElementType; desc
 export default function WorkflowPage() {
   const { user } = useAuth();
   const [activePhase, setActivePhase] = useState<WorkflowPhase>('cod-submission');
-  const [submissions, setSubmissions] = useState<DepartmentSubmission[]>(mockDepartmentSubmissions);
-  const [feedback, setFeedback] = useState<ClassRepFeedback[]>(mockClassRepFeedback);
+  const [submissions, setSubmissions] = useState<DepartmentSubmission[]>([]);
+  const [feedback, setFeedback] = useState<ClassRepFeedback[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [addUnitOpen, setAddUnitOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+
+  useEffect(() => {
+    Promise.all([
+      fetchDepartmentSubmissions(),
+      fetchClassRepFeedback(),
+      fetchVenues()
+    ])
+      .then(([submissionsData, feedbackData, venuesData]) => {
+        setSubmissions(submissionsData);
+        setFeedback(feedbackData);
+        setVenues(venuesData);
+        setError(null);
+      })
+      .catch(err => {
+        console.error('Failed to fetch workflow data:', err.message);
+        setError('Failed to load workflow data');
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   const currentPhaseIndex = phases.findIndex(p => p.key === activePhase);
 
@@ -105,7 +132,7 @@ export default function WorkflowPage() {
       )}
 
       {activePhase === 'det-consolidation' && (
-        <DetConsolidationPhase submissions={submissions} />
+        <DetConsolidationPhase submissions={submissions} venues={venues} />
       )}
 
       {activePhase === 'draft-timetable' && (
@@ -126,7 +153,7 @@ export default function WorkflowPage() {
       )}
 
       {activePhase === 'final-requirements' && (
-        <FinalRequirementsPhase submissions={submissions} feedback={feedback} />
+        <FinalRequirementsPhase submissions={submissions} feedback={feedback} venues={venues} />
       )}
     </div>
   );
@@ -272,14 +299,14 @@ function CodSubmissionPhase({
 }
 
 /* ─── Phase 2: DET Consolidation ─── */
-function DetConsolidationPhase({ submissions }: { submissions: DepartmentSubmission[] }) {
+function DetConsolidationPhase({ submissions, venues }: { submissions: DepartmentSubmission[]; venues: Venue[] }) {
   const [expandedDept, setExpandedDept] = useState<string | null>(null);
   const submitted = submissions.filter(s => s.status === 'submitted' || s.status === 'consolidated');
   const pending = submissions.filter(s => s.status === 'draft');
   const totalUnits = submissions.reduce((sum, s) => sum + s.courseUnits.length, 0);
   const totalStudents = submissions.reduce((sum, s) => sum + s.courseUnits.reduce((a, u) => a + u.numberOfStudents, 0), 0);
 
-  const availableVenues = mockVenues.filter(v => v.status !== 'maintenance');
+  const availableVenues = venues.filter(v => v.status !== 'maintenance');
 
   // Find best venue for a given student count (110% rule)
   const suggestVenue = (students: number) => {
@@ -716,10 +743,11 @@ interface GeneratedSlot {
 }
 
 function FinalRequirementsPhase({
-  submissions, feedback,
+  submissions, feedback, venues,
 }: {
   submissions: DepartmentSubmission[];
   feedback: ClassRepFeedback[];
+  venues: Venue[];
 }) {
   const [generated, setGenerated] = useState(false);
   const [finalTimetable, setFinalTimetable] = useState<GeneratedSlot[]>([]);
@@ -743,7 +771,7 @@ function FinalRequirementsPhase({
     // Sort largest classes first so they get best venues
     const sorted = [...allUnits].sort((a, b) => b.numberOfStudents - a.numberOfStudents);
 
-    const availableVenues = mockVenues.filter(v => v.status !== 'maintenance');
+    const availableVenues = venues.filter(v => v.status !== 'maintenance');
     const slots: GeneratedSlot[] = [];
     const venueSlotMap: Record<string, Set<string>> = {};
     availableVenues.forEach(v => { venueSlotMap[v.id] = new Set(); });

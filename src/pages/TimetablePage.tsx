@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { fetchTimetable } from '@/services/api';
-import { mockTimetable } from '@/data/mockData';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -45,12 +44,13 @@ export default function TimetablePage() {
 
   useEffect(() => {
     fetchTimetable()
-      .then(data => setSlots((data as any[]).map(mapEntry)))
+      .then(data => {
+        setSlots((data as any[]).map(mapEntry));
+        setError(null);
+      })
       .catch(err  => {
         console.error('Failed to fetch timetable from backend:', err.message);
-        // Use mock data as fallback
-        setSlots(mockTimetable);
-        setError(null);
+        setError('Failed to load timetable. Please try again later.');
       })
       .finally(() => setLoading(false));
   }, []);
@@ -69,7 +69,7 @@ export default function TimetablePage() {
 
       {error && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          Could not load timetable: {error}
+          {error}
         </div>
       )}
 

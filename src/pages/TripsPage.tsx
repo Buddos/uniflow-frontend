@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { mockTrips } from '@/data/mockData';
+import { useState, useEffect } from 'react';
+import { fetchTrips, createTrip } from '@/services/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,28 +7,54 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Plane, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import type { AcademicTrip } from '@/types';
 
 export default function TripsPage() {
-  const [trips, setTrips] = useState<AcademicTrip[]>(mockTrips);
+  const [trips, setTrips] = useState<AcademicTrip[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    fetchTrips()
+      .then(data => {
+        setTrips(data);
+        setError(null);
+      })
+      .catch(err => {
+        console.error('Failed to fetch trips:', err.message);
+        setError('Failed to load academic trips. Please try again later.');
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
-    const trip: AcademicTrip = {
-      id: Date.now().toString(),
-      cohort: fd.get('cohort') as string,
-      destination: fd.get('destination') as string,
-      startDate: fd.get('startDate') as string,
-      endDate: fd.get('endDate') as string,
-      affectedSlots: [],
-      department: fd.get('department') as string,
-    };
-    setTrips(prev => [trip, ...prev]);
-    setOpen(false);
-    toast.success('Academic trip scheduled. Affected venues will be released.');
+    setSubmitting(true);
+    try {
+      const fd = new FormData(e.currentTarget);
+      const trip: Omit<AcademicTrip, 'id'> = {
+        cohort: fd.get('cohort') as string,
+        destination: fd.get('destination') as string,
+        startDate: fd.get('startDate') as string,
+        endDate: fd.get('endDate') as string,
+        affectedSlots: [],
+        department: fd.get('department') as string,
+      };
+      const newTrip = await createTrip(trip);
+      setTrips(prev => [newTrip, ...prev]);
+      setOpen(false);
+      (e.target as HTMLFormElement).reset();
+      toast.success('Academic trip scheduled. Affected venues will be released.');
+    } catch (err) {
+      console.error('Failed to create trip:', err);
+      toast.error('Failed to schedule trip. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -67,35 +93,61 @@ export default function TripsPage() {
                   <Input name="endDate" type="date" required />
                 </div>
               </div>
-              <Button type="submit" className="w-full gradient-primary text-primary-foreground">Schedule Trip</Button>
+              <Button type="submit" className="w-full gradient-primary text-primary-foreground" disabled={submitting}>
+                {submitting ? 'Scheduling...' : 'Schedule Trip'}
+              </Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       <div className="grid gap-4">
-        {trips.map(t => (
-          <Card key={t.id} className="shadow-card">
-            <CardContent className="pt-5 pb-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center shrink-0">
-                    <Plane className="w-5 h-5 text-info" />
+        {loading
+          ? Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="shadow-card">
+              <CardContent className="pt-5 pb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <Skeleton className="w-10 h-10 rounded-lg" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-5 w-48" />
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-40 mt-2" />
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-foreground">{t.cohort}</p>
-                    <p className="text-sm text-muted-foreground">{t.destination}</p>
-                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" /> {t.startDate} — {t.endDate}
-                    </p>
-                  </div>
+                  <Skeleton className="h-6 w-24" />
                 </div>
-                <Badge variant="secondary">{t.department}</Badge>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        {trips.length === 0 && (
+              </CardContent>
+            </Card>
+          ))
+          : trips.map(t => (
+            <Card key={t.id} className="shadow-card">
+              <CardContent className="pt-5 pb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center shrink-0">
+                      <Plane className="w-5 h-5 text-info" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">{t.cohort}</p>
+                      <p className="text-sm text-muted-foreground">{t.destination}</p>
+                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                        <Calendar className="w-3 h-3" /> {t.startDate} — {t.endDate}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="secondary">{t.department}</Badge>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        {!loading && trips.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
             <Plane className="w-12 h-12 mx-auto mb-3 opacity-30" />
             <p>No academic trips scheduled</p>

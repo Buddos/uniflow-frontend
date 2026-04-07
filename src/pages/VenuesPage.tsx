@@ -1,17 +1,35 @@
-import { useState } from 'react';
-import { mockVenues } from '@/data/mockData';
+import { useState, useEffect } from 'react';
+import { fetchVenues } from '@/services/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Search, Building2 } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { Venue } from '@/types';
 
 export default function VenuesPage() {
+  const [venues, setVenues] = useState<Venue[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [capacityFilter, setCapacityFilter] = useState('all');
 
-  const filtered = mockVenues.filter(v => {
+  useEffect(() => {
+    fetchVenues()
+      .then(data => {
+        setVenues(data);
+        setError(null);
+      })
+      .catch(err => {
+        console.error('Failed to fetch venues:', err.message);
+        setError('Failed to load venues. Please try again later.');
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = venues.filter(v => {
     if (search && !v.name.toLowerCase().includes(search.toLowerCase())) return false;
     if (statusFilter !== 'all' && v.status !== statusFilter) return false;
     if (capacityFilter === 'small' && v.capacity > 150) return false;
@@ -32,6 +50,12 @@ export default function VenuesPage() {
         <h1 className="text-2xl font-heading font-bold text-foreground">Venue Management</h1>
         <p className="text-muted-foreground text-sm mt-1">Manage and monitor all lecture halls</p>
       </div>
+
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
@@ -72,27 +96,37 @@ export default function VenuesPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(v => (
-                  <tr key={v.id} className="border-t border-border/50 hover:bg-secondary/30 transition-colors">
-                    <td className="p-3">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-medium text-sm text-foreground">{v.name}</span>
-                      </div>
-                    </td>
-                    <td className="p-3 text-sm text-foreground">{v.capacity}</td>
-                    <td className="p-3 text-sm text-muted-foreground">{v.location}</td>
-                    <td className="p-3">
-                      <div className="flex flex-wrap gap-1">
-                        {v.equipment.map(eq => (
-                          <span key={eq} className="text-xs px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground">{eq}</span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="p-3">{statusBadge(v.status)}</td>
-                  </tr>
-                ))}
-                {filtered.length === 0 && (
+                {loading
+                  ? Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i} className="border-t border-border/50">
+                      <td className="p-3"><Skeleton className="h-4 w-20" /></td>
+                      <td className="p-3"><Skeleton className="h-4 w-12" /></td>
+                      <td className="p-3"><Skeleton className="h-4 w-24" /></td>
+                      <td className="p-3"><Skeleton className="h-4 w-32" /></td>
+                      <td className="p-3"><Skeleton className="h-6 w-20" /></td>
+                    </tr>
+                  ))
+                  : filtered.map(v => (
+                    <tr key={v.id} className="border-t border-border/50 hover:bg-secondary/30 transition-colors">
+                      <td className="p-3">
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium text-sm text-foreground">{v.name}</span>
+                        </div>
+                      </td>
+                      <td className="p-3 text-sm text-foreground">{v.capacity}</td>
+                      <td className="p-3 text-sm text-muted-foreground">{v.location}</td>
+                      <td className="p-3">
+                        <div className="flex flex-wrap gap-1">
+                          {v.equipment.map(eq => (
+                            <span key={eq} className="text-xs px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground">{eq}</span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="p-3">{statusBadge(v.status)}</td>
+                    </tr>
+                  ))}
+                {!loading && filtered.length === 0 && (
                   <tr>
                     <td colSpan={5} className="text-center py-8 text-muted-foreground text-sm">No venues match your filters</td>
                   </tr>

@@ -4,7 +4,18 @@
  * All data fetching is abstracted here for easy integration with Java Servlet backend.
  */
 
-import type { Venue, TimetableSlot, CourseRequest, AcademicTrip, Notification, Equipment } from '@/types';
+import type {
+  Venue,
+  TimetableSlot,
+  CourseRequest,
+  AcademicTrip,
+  Notification,
+  Equipment,
+  DepartmentSubmission,
+  CrossDepartmentRequest,
+  ClassRepFeedback,
+  SubmittedCourseUnit,
+} from '@/types';
 
 // Base URL for Java Servlet backend
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081/api';
@@ -98,5 +109,70 @@ export async function registerUser(user: any): Promise<any> {
     const errorData = await response.json();
     throw new Error(errorData.message || errorData.error || 'Registration failed');
   }
+  return response.json();
+}
+
+/** GET /api/departments/submissions */
+export async function fetchDepartmentSubmissions(): Promise<DepartmentSubmission[]> {
+  const response = await fetch(`${BASE_URL}/departments/submissions`);
+  if (!response.ok) throw new Error('Failed to fetch department submissions');
+  return response.json();
+}
+
+/** POST /api/departments/submissions */
+export async function submitDepartmentRequirements(submission: Omit<DepartmentSubmission, 'id'>): Promise<DepartmentSubmission> {
+  const response = await fetch(`${BASE_URL}/departments/submissions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(submission)
+  });
+  if (!response.ok) throw new Error('Failed to submit department requirements');
+  return response.json();
+}
+
+/** GET /api/cross-department-requests */
+export async function fetchCrossDepartmentRequests(): Promise<CrossDepartmentRequest[]> {
+  const response = await fetch(`${BASE_URL}/cross-department-requests`);
+  if (!response.ok) throw new Error('Failed to fetch cross-department requests');
+  return response.json();
+}
+
+/** POST /api/trips */
+export async function createTrip(trip: Omit<AcademicTrip, 'id'>): Promise<AcademicTrip> {
+  const response = await fetch(`${BASE_URL}/trips`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(trip)
+  });
+  if (!response.ok) throw new Error('Failed to create academic trip');
+  return response.json();
+}
+
+/** PUT /api/trips/:id */
+export async function updateTrip(id: string, trip: Partial<AcademicTrip>): Promise<AcademicTrip> {
+  const response = await fetch(`${BASE_URL}/trips/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(trip)
+  });
+  if (!response.ok) throw new Error('Failed to update academic trip');
+  return response.json();
+}
+
+/** GET /api/class-rep-feedback */
+export async function fetchClassRepFeedback(): Promise<ClassRepFeedback[]> {
+  const response = await fetch(`${BASE_URL}/class-rep-feedback`);
+  if (!response.ok) throw new Error('Failed to fetch class rep feedback');
+  return response.json();
+}
+
+/** POST /api/class-rep-feedback */
+export async function submitClassRepFeedback(feedback: Omit<ClassRepFeedback, 'id'>): Promise<ClassRepFeedback> {
+  const response = await fetch(`${BASE_URL}/class-rep-feedback`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(feedback)
+  });
+  if (!response.ok) throw new Error('Failed to submit class rep feedback');
   return response.json();
 }

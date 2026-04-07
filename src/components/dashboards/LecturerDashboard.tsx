@@ -1,39 +1,101 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, BookOpen, Bell } from 'lucide-react';
-import { mockTimetable, mockNotifications } from '@/data/mockData';
+import { fetchTimetable, fetchNotifications } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { TimetableSlot, Notification } from '@/types';
 
 export function LecturerDashboard() {
   const navigate = useNavigate();
-  const todaySlots = mockTimetable.filter(s => s.day === 'Monday' && s.lecturer === 'Dr. Ochieng');
-  const weekSlots = mockTimetable.filter(s => s.lecturer === 'Dr. Ochieng');
+  const [timetable, setTimetable] = useState<TimetableSlot[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    Promise.all([fetchTimetable(), fetchNotifications()])
+      .then(([timetableData, notificationsData]) => {
+        setTimetable(timetableData);
+        setNotifications(notificationsData);
+        setError(null);
+      })
+      .catch(err => {
+        console.error('Failed to fetch dashboard data:', err.message);
+        setError('Failed to load dashboard data');
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  // In a real app, you'd have the current lecturer's info from auth context
+  const currentLecturerName = 'Dr. Peter Ochieng';
+  const currentDepartment = 'Computer Science';
+
+  const todaySlots = timetable.filter(s => s.day === 'Monday' && s.lecturer === currentLecturerName);
+  const weekSlots = timetable.filter(s => s.lecturer === currentLecturerName);
+  const unreadNotifications = notifications.filter(n => !n.read).length;
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-heading font-bold text-foreground">My Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">Dr. Peter Ochieng — Computer Science</p>
+        <p className="text-muted-foreground text-sm mt-1">{currentLecturerName} — {currentDepartment}</p>
       </div>
 
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {[
-          { label: "Today's Classes", value: todaySlots.length, icon: Calendar, color: 'text-primary' },
-          { label: 'Weekly Classes', value: weekSlots.length, icon: BookOpen, color: 'text-accent' },
-          { label: 'Notifications', value: mockNotifications.filter(n => !n.read).length, icon: Bell, color: 'text-warning' },
-        ].map(s => (
-          <Card key={s.label} className="shadow-card">
-            <CardContent className="pt-5 pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{s.label}</p>
-                  <p className="text-3xl font-heading font-bold text-foreground mt-1">{s.value}</p>
+        {loading ? (
+          <>
+            <Card className="shadow-card">
+              <CardContent className="pt-5 pb-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-8 w-12" />
                 </div>
-                <s.icon className={`w-10 h-10 ${s.color} opacity-80`} />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+            <Card className="shadow-card">
+              <CardContent className="pt-5 pb-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-8 w-12" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="shadow-card">
+              <CardContent className="pt-5 pb-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-8 w-12" />
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          [
+            { label: "Today's Classes", value: todaySlots.length, icon: Calendar, color: 'text-primary' },
+            { label: 'Weekly Classes', value: weekSlots.length, icon: BookOpen, color: 'text-accent' },
+            { label: 'Notifications', value: unreadNotifications, icon: Bell, color: 'text-warning' },
+          ].map(s => (
+            <Card key={s.label} className="shadow-card">
+              <CardContent className="pt-5 pb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">{s.label}</p>
+                    <p className="text-3xl font-heading font-bold text-foreground mt-1">{s.value}</p>
+                  </div>
+                  <s.icon className={`w-10 h-10 ${s.color} opacity-80`} />
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -43,7 +105,13 @@ export function LecturerDashboard() {
             <Button variant="outline" size="sm" onClick={() => navigate('/timetable')}>Full Timetable</Button>
           </CardHeader>
           <CardContent>
-            {todaySlots.length === 0 ? (
+            {loading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full rounded-lg" />
+                ))}
+              </div>
+            ) : todaySlots.length === 0 ? (
               <p className="text-muted-foreground text-sm py-4 text-center">No classes today</p>
             ) : (
               <div className="space-y-3">
