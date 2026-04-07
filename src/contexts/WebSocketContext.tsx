@@ -12,18 +12,21 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Connect to WebSocket when the app starts
-    websocketService.connect()
-      .then(() => {
-        setIsConnected(true);
-      })
-      .catch((error) => {
-        console.error('Failed to connect to WebSocket:', error);
-        setIsConnected(false);
-      });
+    // Attempt WebSocket connection but don't block rendering if it fails
+    const timeout = setTimeout(() => {
+      websocketService.connect()
+        .then(() => {
+          setIsConnected(true);
+        })
+        .catch((error) => {
+          console.warn('WebSocket connection failed (non-blocking):', error);
+          setIsConnected(false);
+        });
+    }, 100);
 
     // Cleanup on unmount
     return () => {
+      clearTimeout(timeout);
       websocketService.disconnect();
     };
   }, []);

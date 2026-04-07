@@ -20,23 +20,29 @@ import type {
 // Base URL for Java Servlet backend
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081/api';
 
-/** GET /api/venues/all */
+/** GET /api/venues */
 export async function fetchVenues(): Promise<Venue[]> {
-  const response = await fetch(`${BASE_URL}/venues/all`);
+  const response = await fetch(`${BASE_URL}/venues`, {
+    credentials: 'include'
+  });
   if (!response.ok) throw new Error('Failed to fetch venues');
   return response.json();
 }
 
 /** GET /api/timetable */
 export async function fetchTimetable(): Promise<TimetableSlot[]> {
-  const response = await fetch(`${BASE_URL}/timetable`);
+  const response = await fetch(`${BASE_URL}/timetable`, {
+    credentials: 'include'
+  });
   if (!response.ok) throw new Error('Failed to fetch timetable');
   return response.json();
 }
 
 /** GET /api/requests */
 export async function fetchCourseRequests(): Promise<CourseRequest[]> {
-  const response = await fetch(`${BASE_URL}/requests`);
+  const response = await fetch(`${BASE_URL}/requests`, {
+    credentials: 'include'
+  });
   if (!response.ok) throw new Error('Failed to fetch course requests');
   return response.json();
 }
@@ -44,6 +50,7 @@ export async function fetchCourseRequests(): Promise<CourseRequest[]> {
 /** POST /api/requests */
 export async function submitCourseRequest(request: Omit<CourseRequest, 'id' | 'status' | 'requestDate'>): Promise<CourseRequest> {
   const response = await fetch(`${BASE_URL}/requests`, {
+    credentials: 'include',
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(request)
@@ -54,21 +61,27 @@ export async function submitCourseRequest(request: Omit<CourseRequest, 'id' | 's
 
 /** GET /api/trips */
 export async function fetchTrips(): Promise<AcademicTrip[]> {
-  const response = await fetch(`${BASE_URL}/trips`);
+  const response = await fetch(`${BASE_URL}/trips`, {
+    credentials: 'include'
+  });
   if (!response.ok) throw new Error('Failed to fetch trips');
   return response.json();
 }
 
 /** GET /api/notifications */
 export async function fetchNotifications(): Promise<Notification[]> {
-  const response = await fetch(`${BASE_URL}/notifications`);
+  const response = await fetch(`${BASE_URL}/notifications`, {
+    credentials: 'include'
+  });
   if (!response.ok) throw new Error('Failed to fetch notifications');
   return response.json();
 }
 
 /** GET /api/equipment */
 export async function fetchEquipment(): Promise<Equipment[]> {
-  const response = await fetch(`${BASE_URL}/equipment`);
+  const response = await fetch(`${BASE_URL}/equipment`, {
+    credentials: 'include'
+  });
   if (!response.ok) throw new Error('Failed to fetch equipment');
   return response.json();
 }
@@ -76,6 +89,7 @@ export async function fetchEquipment(): Promise<Equipment[]> {
 /** POST /api/bookings */
 export async function bookMakeupClass(booking: { date: string; timeSlot: string; venueId: string }): Promise<{ success: boolean }> {
   const response = await fetch(`${BASE_URL}/bookings`, {
+    credentials: 'include',
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(booking)
@@ -87,6 +101,7 @@ export async function bookMakeupClass(booking: { date: string; timeSlot: string;
 /** POST /api/auth/login */
 export async function loginUser(email: string, password: string): Promise<any> {
   const response = await fetch(`${BASE_URL}/auth/login`, {
+    credentials: 'include',
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password })
@@ -101,6 +116,7 @@ export async function loginUser(email: string, password: string): Promise<any> {
 /** POST /api/auth/register */
 export async function registerUser(user: any): Promise<any> {
   const response = await fetch(`${BASE_URL}/auth/register`, {
+    credentials: 'include',
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(user)
@@ -114,7 +130,9 @@ export async function registerUser(user: any): Promise<any> {
 
 /** GET /api/departments/submissions */
 export async function fetchDepartmentSubmissions(): Promise<DepartmentSubmission[]> {
-  const response = await fetch(`${BASE_URL}/departments/submissions`);
+  const response = await fetch(`${BASE_URL}/departments/submissions`, {
+    credentials: 'include'
+  });
   if (!response.ok) throw new Error('Failed to fetch department submissions');
   return response.json();
 }
@@ -122,6 +140,7 @@ export async function fetchDepartmentSubmissions(): Promise<DepartmentSubmission
 /** POST /api/departments/submissions */
 export async function submitDepartmentRequirements(submission: Omit<DepartmentSubmission, 'id'>): Promise<DepartmentSubmission> {
   const response = await fetch(`${BASE_URL}/departments/submissions`, {
+    credentials: 'include',
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(submission)
@@ -132,7 +151,9 @@ export async function submitDepartmentRequirements(submission: Omit<DepartmentSu
 
 /** GET /api/cross-department-requests */
 export async function fetchCrossDepartmentRequests(): Promise<CrossDepartmentRequest[]> {
-  const response = await fetch(`${BASE_URL}/cross-department-requests`);
+  const response = await fetch(`${BASE_URL}/cross-department-requests`, {
+    credentials: 'include'
+  });
   if (!response.ok) throw new Error('Failed to fetch cross-department requests');
   return response.json();
 }
@@ -140,6 +161,7 @@ export async function fetchCrossDepartmentRequests(): Promise<CrossDepartmentReq
 /** POST /api/trips */
 export async function createTrip(trip: Omit<AcademicTrip, 'id'>): Promise<AcademicTrip> {
   const response = await fetch(`${BASE_URL}/trips`, {
+    credentials: 'include',
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(trip)
@@ -151,6 +173,7 @@ export async function createTrip(trip: Omit<AcademicTrip, 'id'>): Promise<Academ
 /** PUT /api/trips/:id */
 export async function updateTrip(id: string, trip: Partial<AcademicTrip>): Promise<AcademicTrip> {
   const response = await fetch(`${BASE_URL}/trips/${id}`, {
+    credentials: 'include',
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(trip)
@@ -161,7 +184,9 @@ export async function updateTrip(id: string, trip: Partial<AcademicTrip>): Promi
 
 /** GET /api/class-rep-feedback */
 export async function fetchClassRepFeedback(): Promise<ClassRepFeedback[]> {
-  const response = await fetch(`${BASE_URL}/class-rep-feedback`);
+  const response = await fetch(`${BASE_URL}/class-rep-feedback`, {
+    credentials: 'include'
+  });
   if (!response.ok) throw new Error('Failed to fetch class rep feedback');
   return response.json();
 }
@@ -169,6 +194,7 @@ export async function fetchClassRepFeedback(): Promise<ClassRepFeedback[]> {
 /** POST /api/class-rep-feedback */
 export async function submitClassRepFeedback(feedback: Omit<ClassRepFeedback, 'id'>): Promise<ClassRepFeedback> {
   const response = await fetch(`${BASE_URL}/class-rep-feedback`, {
+    credentials: 'include',
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(feedback)

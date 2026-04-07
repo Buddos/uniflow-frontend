@@ -26,7 +26,12 @@ export function AdminDashboard() {
       })
       .catch(err => {
         console.error('Failed to fetch dashboard data:', err.message);
-        setError('Failed to load dashboard data');
+        // Check if it's a network/server error vs empty data
+        if (err.message.includes('Failed to fetch') || err.message.includes('500') || err.message.includes('404')) {
+          setError('Failed to load dashboard data. Please check your connection and try again.');
+        } else {
+          setError('Unable to load dashboard data at this time.');
+        }
       })
       .finally(() => setLoading(false));
   }, []);
@@ -57,6 +62,12 @@ export function AdminDashboard() {
       {error && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
+        </div>
+      )}
+
+      {!loading && !error && venues.length === 0 && courseRequests.length === 0 && submissions.length === 0 && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          No data available yet. Dashboard information will appear here once data is added to the system.
         </div>
       )}
 

@@ -1,5 +1,5 @@
 import SockJS from 'sockjs-client';
-import { Client } from 'stompjs';
+import { Client, Message } from '@stomp/stompjs';
 import { toast } from 'sonner';
 
 export interface RealtimeMessage {
@@ -8,6 +8,11 @@ export interface RealtimeMessage {
   timestamp: string;
   payload: any;
 }
+
+const getWebSocketUrl = () => {
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8081/api';
+  return apiUrl.replace(/\/api\/?$/, '') + '/ws';
+};
 
 class WebSocketService {
   private stompClient: Client | null = null;
@@ -25,48 +30,52 @@ class WebSocketService {
         return;
       }
 
-      const socket = new SockJS(`${import.meta.env.VITE_API_URL || 'http://localhost:8081'}/ws`);
-      this.stompClient = Client.over(socket);
+      if (!this.stompClient) {
+        this.stompClient = new Client({
+          webSocketFactory: () => new SockJS(getWebSocketUrl()),
+          reconnectDelay: this.reconnectInterval,
+          debug: (str) => console.debug('[STOMP]', str),
+          onConnect: () => {
+            console.log('Connected to WebSocket');
+            this.isConnected = true;
+            this.reconnectAttempts = 0;
+            this.subscribeToTopic('/topic/bookings', 'bookings');
+            this.subscribeToTopic('/topic/venues', 'venues');
+            this.subscribeToTopic('/topic/timetables', 'timetables');
+            this.subscribeToTopic('/topic/trips', 'trips');
+            this.subscribeToTopic('/topic/notifications', 'notifications');
+            this.subscribeToTopic('/topic/requests', 'requests');
+            resolve();
+          },
+          onStompError: (frame) => {
+            console.error('STOMP error:', frame.body);
+            this.isConnected = false;
+            reject(new Error(frame.body));
+          },
+          onWebSocketError: (error) => {
+            console.error('WebSocket error:', error);
+            this.isConnected = false;
+          }
+        });
+      }
 
-      this.stompClient.connect(
-        {},
-        (frame) => {
-          console.log('Connected to WebSocket:', frame);
-          this.isConnected = true;
-          this.reconnectAttempts = 0;
-
-          // Subscribe to all entity topics
-          this.subscribeToTopic('/topic/bookings', 'bookings');
-          this.subscribeToTopic('/topic/venues', 'venues');
-          this.subscribeToTopic('/topic/timetables', 'timetables');
-          this.subscribeToTopic('/topic/trips', 'trips');
-          this.subscribeToTopic('/topic/notifications', 'notifications');
-          this.subscribeToTopic('/topic/requests', 'requests');
-
-          resolve();
-        },
-        (error) => {
-          console.error('WebSocket connection error:', error);
-          this.isConnected = false;
-          this.handleReconnect();
-          reject(error);
-        }
-      );
+      try {
+        this.stompClient.activate();
+      } catch (error) {
+        console.error('Failed to activate STOMP client:', error);
+        reject(error);
+      }
     });
   }
 
   private subscribeToTopic(topic: string, entityType: string) {
     if (!this.stompClient) return;
 
-    this.stompClient.subscribe(topic, (message) => {
+    this.stompClient.subscribe(topic, (message: Message) => {
       try {
         const realtimeMessage: RealtimeMessage = JSON.parse(message.body);
         console.log(`Received ${entityType} update:`, realtimeMessage);
-
-        // Show toast notification for important updates
         this.showToastForUpdate(realtimeMessage);
-
-        // Notify listeners
         this.notifyListeners(entityType, realtimeMessage);
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
@@ -76,34 +85,33 @@ class WebSocketService {
 
   private showToastForUpdate(message: RealtimeMessage) {
     const { operation, entityType, payload } = message;
-
     let title = '';
     let description = '';
 
     switch (entityType) {
       case 'BOOKING':
         title = `Booking ${operation.toLowerCase()}d`;
-        description = payload.purpose || `Booking for ${payload.venue?.name || 'venue'}`;
+        description = payload?.purpose || `Booking for ${payload?.venue?.name || 'venue'}`;
         break;
       case 'VENUE':
         title = `Venue ${operation.toLowerCase()}d`;
-        description = payload.name || 'Venue updated';
+        description = payload?.name || 'Venue updated';
         break;
       case 'TIMETABLE':
         title = `Timetable ${operation.toLowerCase()}d`;
-        description = payload.courseUnit?.name || 'Timetable entry updated';
+        description = payload?.courseUnit?.name || 'Timetable entry updated';
         break;
       case 'TRIP':
         title = `Trip ${operation.toLowerCase()}d`;
-        description = payload.title || 'Academic trip updated';
+        description = payload?.title || 'Academic trip updated';
         break;
       case 'NOTIFICATION':
         title = `Notification ${operation.toLowerCase()}d`;
-        description = payload.title || 'Notification updated';
+        description = payload?.title || 'Notification updated';
         break;
       case 'REQUEST':
         title = `Request ${operation.toLowerCase()}d`;
-        description = payload.courseUnit?.name || 'Course request updated';
+        description = payload?.courseUnit?.name || 'Course request updated';
         break;
     }
 
@@ -125,30 +133,10 @@ class WebSocketService {
     }
   }
 
-  private handleReconnect() {
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
-      this.reconnectAttempts++;
-      console.log(`Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-
-      setTimeout(() => {
-        this.connect().catch(() => {
-          // Reconnection failed, will try again
-        });
-      }, this.reconnectInterval);
-    } else {
-      console.error('Max reconnection attempts reached');
-      toast.error('Lost connection to server', {
-        description: 'Real-time updates are unavailable'
-      });
-    }
-  }
-
   disconnect() {
-    if (this.stompClient && this.isConnected) {
-      this.stompClient.disconnect(() => {
-        console.log('Disconnected from WebSocket');
-        this.isConnected = false;
-      });
+    if (this.stompClient) {
+      this.stompClient.deactivate();
+      this.isConnected = false;
     }
   }
 
@@ -158,7 +146,6 @@ class WebSocketService {
     }
     this.listeners[entityType].push(callback);
 
-    // Return unsubscribe function
     return () => {
       const index = this.listeners[entityType].indexOf(callback);
       if (index > -1) {

@@ -5,10 +5,12 @@ import { fetchTimetable, fetchNotifications } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/contexts/AuthContext';
 import type { TimetableSlot, Notification } from '@/types';
 
 export function LecturerDashboard() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [timetable, setTimetable] = useState<TimetableSlot[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,16 +25,24 @@ export function LecturerDashboard() {
       })
       .catch(err => {
         console.error('Failed to fetch dashboard data:', err.message);
-        setError('Failed to load dashboard data');
+        // Check if it's a network/server error vs empty data
+        if (err.message.includes('Failed to fetch') || err.message.includes('500') || err.message.includes('404')) {
+          setError('Failed to load dashboard data. Please check your connection and try again.');
+        } else {
+          setError('Unable to load dashboard data at this time.');
+        }
       })
       .finally(() => setLoading(false));
   }, []);
 
-  // In a real app, you'd have the current lecturer's info from auth context
-  const currentLecturerName = 'Dr. Peter Ochieng';
-  const currentDepartment = 'Computer Science';
+  const currentLecturerName = user?.name ?? 'Lecturer';
+  const currentDepartment = user?.department ?? 'Academics';
 
-  const todaySlots = timetable.filter(s => s.day === 'Monday' && s.lecturer === currentLecturerName);
+  // Get today's day name (Monday, Tuesday, etc.)
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const todayName = days[new Date().getDay()];
+
+  const todaySlots = timetable.filter(s => s.day === todayName && s.lecturer === currentLecturerName);
   const weekSlots = timetable.filter(s => s.lecturer === currentLecturerName);
   const unreadNotifications = notifications.filter(n => !n.read).length;
 
@@ -46,6 +56,12 @@ export function LecturerDashboard() {
       {error && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
+        </div>
+      )}
+
+      {!loading && !error && timetable.length === 0 && notifications.length === 0 && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          No timetable or notifications available yet. Information will appear here once your schedule and notifications are set up.
         </div>
       )}
 

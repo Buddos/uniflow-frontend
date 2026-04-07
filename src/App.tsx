@@ -5,6 +5,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { WebSocketProvider } from "@/contexts/WebSocketContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { ErrorBoundary } from "@/ErrorBoundary";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import LoginPage from "@/pages/LoginPage";
 import DashboardPage from "@/pages/DashboardPage";
@@ -20,6 +22,11 @@ import WorkflowPage from "@/pages/WorkflowPage";
 import NotFound from "@/pages/NotFound";
 import Index from "@/pages/Index";
 import AdminConsolidationPage from "@/pages/AdminConsolidationPage";
+import TimetablingAdminDashboard from "@/pages/TimetablingAdminDashboard";
+import ConsolidateSubmissionsPage from "@/pages/ConsolidateSubmissionsPage";
+import ReviewCrossDepRequestsPage from "@/pages/ReviewCrossDepRequestsPage";
+import AllocateVenuesPage from "@/pages/AllocateVenuesPage";
+import ClassRepFeedbackPage from "@/pages/ClassRepFeedbackPage";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +45,11 @@ function AppRoutes() {
       <Route path="/" element={<Index />} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/admin/consolidation" element={<ProtectedRoute><AdminConsolidationPage /></ProtectedRoute>} />
+      <Route path="/timetabling-admin/dashboard" element={<ProtectedRoute><TimetablingAdminDashboard /></ProtectedRoute>} />
+      <Route path="/timetabling-admin/consolidate" element={<ProtectedRoute><ConsolidateSubmissionsPage /></ProtectedRoute>} />
+      <Route path="/timetabling-admin/requests" element={<ProtectedRoute><ReviewCrossDepRequestsPage /></ProtectedRoute>} />
+      <Route path="/timetabling-admin/allocate-venues" element={<ProtectedRoute><AllocateVenuesPage /></ProtectedRoute>} />
+      <Route path="/timetabling-admin/feedback" element={<ProtectedRoute><ClassRepFeedbackPage /></ProtectedRoute>} />
       <Route path="/workflow" element={<ProtectedRoute><WorkflowPage /></ProtectedRoute>} />
       <Route path="/timetable" element={<ProtectedRoute><TimetablePage /></ProtectedRoute>} />
       <Route path="/venues" element={<ProtectedRoute><VenuesPage /></ProtectedRoute>} />
@@ -53,19 +65,21 @@ function AppRoutes() {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <WebSocketProvider>
-          <AuthProvider>
-            <AppRoutes />
-          </AuthProvider>
-        </WebSocketProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <WebSocketProvider>
+            <AuthProvider>
+              <AppRoutes />
+            </AuthProvider>
+          </WebSocketProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
