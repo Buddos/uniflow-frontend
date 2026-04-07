@@ -1,6 +1,7 @@
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAuth } from '@/contexts/AuthContext';
 import { NotificationBell } from '@/components/NotificationBell';
+import { WebSocketStatus } from '@/components/WebSocketStatus';
 
 export function TopBar() {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ export function TopBar() {
         </div>
       </div>
       <div className="flex items-center gap-3">
+        <WebSocketStatus />
         <NotificationBell />
         <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
           {user?.name?.charAt(0)}

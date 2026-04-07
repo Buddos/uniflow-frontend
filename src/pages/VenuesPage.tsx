@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchVenues } from '@/services/api';
+import { useRealtimeVenues } from '@/hooks/useRealtimeUpdates';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -28,6 +29,26 @@ export default function VenuesPage() {
       })
       .finally(() => setLoading(false));
   }, []);
+
+  // Handle real-time venue updates
+  useRealtimeVenues((message) => {
+    const { operation, payload } = message;
+
+    setVenues(currentVenues => {
+      switch (operation) {
+        case 'CREATE':
+          return [...currentVenues, payload];
+        case 'UPDATE':
+          return currentVenues.map(venue =>
+            venue.id === payload.id ? payload : venue
+          );
+        case 'DELETE':
+          return currentVenues.filter(venue => venue.id !== payload.id);
+        default:
+          return currentVenues;
+      }
+    });
+  });
 
   const filtered = venues.filter(v => {
     if (search && !v.name.toLowerCase().includes(search.toLowerCase())) return false;
