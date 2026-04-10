@@ -7,10 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { fetchDepartmentSubmissions, fetchClassRepFeedback, fetchVenues } from '@/services/api';
+import { fetchDepartmentSubmissions, fetchClassRepFeedback, fetchVenues, fetchCrossDepartmentRequests } from '@/services/api';
 import { toast } from 'sonner';
-import type { WorkflowPhase, DepartmentSubmission, SubmittedCourseUnit, ClassRepFeedback, Venue } from '@/types';
+import type { WorkflowPhase, DepartmentSubmission, SubmittedCourseUnit, ClassRepFeedback, Venue, CrossDepartmentRequest } from '@/types';
 import {
   ClipboardList, Database, FileSpreadsheet, MessageSquare,
   Settings2, CheckCircle2, ChevronRight, Plus, AlertTriangle,
@@ -38,6 +39,7 @@ export default function WorkflowPage() {
   const [submissions, setSubmissions] = useState<DepartmentSubmission[]>([]);
   const [feedback, setFeedback] = useState<ClassRepFeedback[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
+  const [crossDeptRequests, setCrossDeptRequests] = useState<CrossDepartmentRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addUnitOpen, setAddUnitOpen] = useState(false);
@@ -47,12 +49,14 @@ export default function WorkflowPage() {
     Promise.all([
       fetchDepartmentSubmissions(),
       fetchClassRepFeedback(),
-      fetchVenues()
+      fetchVenues(),
+      fetchCrossDepartmentRequests()
     ])
-      .then(([submissionsData, feedbackData, venuesData]) => {
+      .then(([submissionsData, feedbackData, venuesData, crossDeptData]) => {
         setSubmissions(submissionsData);
         setFeedback(feedbackData);
         setVenues(venuesData);
+        setCrossDeptRequests(crossDeptData);
         setError(null);
       })
       .catch(err => {
@@ -63,6 +67,11 @@ export default function WorkflowPage() {
   }, []);
 
   const currentPhaseIndex = phases.findIndex(p => p.key === activePhase);
+  const codDepartment = user?.department || 'Computer Science';
+  const pendingIncomingRequests = crossDeptRequests.filter(r =>
+    r.status === 'pending' &&
+    r.providingDepartment?.toLowerCase() === codDepartment.toLowerCase()
+  ).length;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -128,6 +137,7 @@ export default function WorkflowPage() {
           setAddUnitOpen={setAddUnitOpen}
           userRole={user?.role}
           userDept={user?.department}
+          pendingIncomingRequests={pendingIncomingRequests}
         />
       )}
 
@@ -161,7 +171,7 @@ export default function WorkflowPage() {
 
 /* ─── Phase 1: COD Submission ─── */
 function CodSubmissionPhase({
-  submissions, setSubmissions, addUnitOpen, setAddUnitOpen, userRole, userDept,
+  submissions, setSubmissions, addUnitOpen, setAddUnitOpen, userRole, userDept, pendingIncomingRequests,
 }: {
   submissions: DepartmentSubmission[];
   setSubmissions: React.Dispatch<React.SetStateAction<DepartmentSubmission[]>>;
@@ -169,6 +179,7 @@ function CodSubmissionPhase({
   setAddUnitOpen: (v: boolean) => void;
   userRole?: string;
   userDept?: string;
+  pendingIncomingRequests: number;
 }) {
   const handleAddUnit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -250,14 +261,31 @@ function CodSubmissionPhase({
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-heading">{sub.department}</CardTitle>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col items-end gap-2">
                 <Badge variant={sub.status === 'submitted' ? 'default' : sub.status === 'draft' ? 'secondary' : 'outline'}>
                   {sub.status}
                 </Badge>
                 {isCod && sub.status === 'draft' && sub.department === (userDept || 'Computer Science') && (
-                  <Button size="sm" onClick={() => handleSubmit(sub.id)} className="gradient-primary text-primary-foreground">
-                    <Send className="w-3 h-3 mr-1" /> Submit
-                  </Button>
+                  <>
+                    {pendingIncomingRequests > 0 && (
+                      <div className="max-w-xl rounded-md border border-red-300 bg-red-100 p-3 text-red-900">
+                        <p className="text-xs font-semibold sm:text-sm">
+                          SYSTEM LOCK: You have {pendingIncomingRequests} pending cross-departmental student requests. You must Accept or Reject these incoming cohorts before finalizing your timetable.
+                        </p>
+                        <Button asChild size="sm" variant="destructive" className="mt-2">
+                          <Link to="/courserequest.jsp">Go to Course Requests</Link>
+                        </Button>
+                      </div>
+                    )}
+                    <Button
+                      size="sm"
+                      onClick={() => handleSubmit(sub.id)}
+                      className="gradient-primary text-primary-foreground"
+                      disabled={pendingIncomingRequests > 0}
+                    >
+                      <Send className="w-3 h-3 mr-1" /> Submit
+                    </Button>
+                  </>
                 )}
               </div>
             </div>

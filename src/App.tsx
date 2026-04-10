@@ -55,6 +55,7 @@ function AppRoutes() {
       <Route path="/venues" element={<ProtectedRoute><VenuesPage /></ProtectedRoute>} />
       <Route path="/live-map" element={<ProtectedRoute><LiveMapPage /></ProtectedRoute>} />
       <Route path="/course-requests" element={<ProtectedRoute><CourseRequestsPage /></ProtectedRoute>} />
+        <Route path="/courserequest.jsp" element={<ProtectedRoute><CourseRequestsPage /></ProtectedRoute>} />
       <Route path="/trips" element={<ProtectedRoute><TripsPage /></ProtectedRoute>} />
       <Route path="/makeup" element={<ProtectedRoute><MakeupPage /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
