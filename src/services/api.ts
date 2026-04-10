@@ -40,6 +40,16 @@ export interface AuthResponse {
   error?: string;
 }
 
+export class HttpError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = 'HttpError';
+    this.status = status;
+  }
+}
+
 /** GET /api/venues */
 export async function fetchVenues(): Promise<Venue[]> {
   const response = await fetch(`${BASE_URL}/venues`, {
@@ -114,7 +124,10 @@ export async function bookMakeupClass(booking: { date: string; timeSlot: string;
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(booking)
   });
-  if (!response.ok) throw new Error('Failed to book makeup class');
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => null) as { message?: string; error?: string } | null;
+    throw new HttpError(response.status, errorData?.message || errorData?.error || 'Failed to book makeup class');
+  }
   return response.json();
 }
 

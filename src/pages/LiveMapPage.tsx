@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { fetchVenues } from '@/services/api';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -6,6 +6,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { Venue } from '@/types';
+
+const LIVE_MAP_REFRESH_EVENT = 'uniflow:refresh-live-map';
 
 export default function LiveMapPage() {
   const { currentRole } = useAuth();
@@ -15,17 +17,31 @@ export default function LiveMapPage() {
   const [simulate, setSimulate] = useState(false);
   const [studentNoticeShown, setStudentNoticeShown] = useState(false);
 
-  useEffect(() => {
+  const loadVenues = useCallback(() => {
     fetchVenues()
       .then(data => {
         setVenues(data);
         setError(null);
       })
-      .catch(err => {
+      .catch(() => {
         setError('Failed to load venues');
       })
-      .finally(() => setLoading(false));
-  }, []);
+        .finally(() => setLoading(false));
+      }, []);
+
+  useEffect(() => {
+    loadVenues();
+  }, [loadVenues]);
+
+  useEffect(() => {
+    const handleRefresh = () => {
+      setLoading(true);
+      loadVenues();
+    };
+
+    window.addEventListener(LIVE_MAP_REFRESH_EVENT, handleRefresh);
+    return () => window.removeEventListener(LIVE_MAP_REFRESH_EVENT, handleRefresh);
+  }, [loadVenues]);
 
   useEffect(() => {
     if (currentRole === 'student' && !loading && !studentNoticeShown) {

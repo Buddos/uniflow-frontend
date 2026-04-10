@@ -5,10 +5,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { BookOpen, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { HttpError } from '@/services/api';
 import type { Venue } from '@/types';
+
+const LIVE_MAP_REFRESH_EVENT = 'uniflow:refresh-live-map';
 
 const timeSlots = ['7:00-9:00', '9:00-11:00', '11:00-1:00', '2:00-4:00', '4:00-6:00'];
 
@@ -21,6 +33,8 @@ export default function MakeupPage() {
   const [selectedVenue, setSelectedVenue] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [conflictOpen, setConflictOpen] = useState(false);
+  const [conflictMessage, setConflictMessage] = useState('');
 
   useEffect(() => {
     fetchVenues()
@@ -53,12 +67,27 @@ export default function MakeupPage() {
       setDate('');
       setTimeSlot('');
       setSelectedVenue('');
-    } catch (err) {
-      console.error('Failed to book venue:', err);
+    } catch (error) {
+      if (error instanceof HttpError && error.status === 409) {
+        setConflictMessage('Error: Someone beat you to it! This slot has already been booked. The Live Map is refreshing...');
+        setConflictOpen(true);
+        return;
+      }
+
+      if (error instanceof HttpError && error.status === 403) {
+        toast.error('You do not have permission to book this makeup slot.');
+        return;
+      }
+
       toast.error('Failed to book venue. Please try again.');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleConflictClosed = () => {
+    setConflictOpen(false);
+    window.dispatchEvent(new CustomEvent(LIVE_MAP_REFRESH_EVENT));
   };
 
   return (
@@ -133,6 +162,22 @@ export default function MakeupPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={conflictOpen} onOpenChange={(open) => !open && handleConflictClosed()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">Booking Conflict</AlertDialogTitle>
+            <AlertDialogDescription className="text-base text-foreground">
+              {conflictMessage}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Refresh Live Map
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
