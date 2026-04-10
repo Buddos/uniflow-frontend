@@ -110,6 +110,7 @@ export default function LoginPage() {
                         <SelectValue placeholder="Select a role" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="STUDENT">Student</SelectItem>
                         <SelectItem value="TIMETABLING_ADMIN">Timetabling Admin</SelectItem>
                         <SelectItem value="COD">Head of Department (COD)</SelectItem>
                         <SelectItem value="LECTURER">Lecturer</SelectItem>

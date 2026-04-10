@@ -3,13 +3,17 @@ import { fetchVenues } from '@/services/api';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 import type { Venue } from '@/types';
 
 export default function LiveMapPage() {
+  const { currentRole } = useAuth();
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [simulate, setSimulate] = useState(false);
+  const [studentNoticeShown, setStudentNoticeShown] = useState(false);
 
   useEffect(() => {
     fetchVenues()
@@ -18,11 +22,17 @@ export default function LiveMapPage() {
         setError(null);
       })
       .catch(err => {
-        console.error('Failed to fetch venues:', err.message);
         setError('Failed to load venues');
       })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (currentRole === 'student' && !loading && !studentNoticeShown) {
+      toast.info('Green slots indicate rooms released for the public pool. Available for individual or group study until the next scheduled class.');
+      setStudentNoticeShown(true);
+    }
+  }, [currentRole, loading, studentNoticeShown]);
 
   const displayVenues = venues.map(v => {
     if (!simulate) return v;
@@ -37,6 +47,11 @@ export default function LiveMapPage() {
         <div>
           <h1 className="text-2xl font-heading font-bold text-foreground">Live Venue Map</h1>
           <p className="text-muted-foreground text-sm mt-1">Real-time venue availability overview</p>
+          {currentRole === 'student' && (
+            <p className="mt-2 rounded-md border border-success/30 bg-success/10 px-3 py-2 text-xs text-success-foreground">
+              Green slots indicate rooms released for the public pool. Available for individual or group study until the next scheduled class.
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Switch id="simulate" checked={simulate} onCheckedChange={setSimulate} disabled={loading} />

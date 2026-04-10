@@ -22,7 +22,7 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'cod', 'lecturer', 'class_rep', 'timetabling_admin'], group: 'Main' },
+  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, roles: ['admin', 'cod', 'lecturer', 'class_rep', 'timetabling_admin', 'student'], group: 'Main' },
   
   // Timetabling Admin specific
   { title: 'Timetabling Admin', url: '/timetabling-admin/dashboard', icon: ClipboardList, roles: ['timetabling_admin'], group: 'Admin' },
@@ -33,9 +33,9 @@ const navItems: NavItem[] = [
 
   // Shared
   { title: 'Semester Workflow', url: '/workflow', icon: FileText, roles: ['admin', 'cod', 'lecturer'], group: 'Planning' },
-  { title: 'Timetable', url: '/timetable', icon: Calendar, roles: ['admin', 'cod', 'lecturer', 'class_rep', 'timetabling_admin'], group: 'Planning' },
-  { title: 'Venues', url: '/venues', icon: Building2, roles: ['admin', 'cod', 'lecturer', 'class_rep', 'timetabling_admin'], group: 'Planning' },
-  { title: 'Live Map', url: '/live-map', icon: Map, roles: ['admin', 'cod', 'class_rep'], group: 'Planning' },
+  { title: 'Timetable', url: '/timetable', icon: Calendar, roles: ['admin', 'cod', 'lecturer', 'class_rep', 'timetabling_admin', 'student'], group: 'Planning' },
+  { title: 'Venues', url: '/venues', icon: Building2, roles: ['admin', 'cod', 'lecturer', 'class_rep', 'timetabling_admin', 'student'], group: 'Planning' },
+  { title: 'Live Map', url: '/live-map', icon: Map, roles: ['admin', 'cod', 'class_rep', 'student'], group: 'Planning' },
   
   // COD & Admin Only
   { title: 'Course Requests', url: '/course-requests', icon: FileText, roles: ['admin', 'cod'], group: 'Department' },
@@ -48,7 +48,7 @@ const navItems: NavItem[] = [
   { title: 'Equipment', url: '/equipment', icon: Wrench, roles: ['admin'], group: 'Management' },
   
   // All
-  { title: 'Notifications', url: '/notifications', icon: Bell, roles: ['admin', 'cod', 'lecturer', 'class_rep', 'timetabling_admin'] },
+  { title: 'Notifications', url: '/notifications', icon: Bell, roles: ['admin', 'cod', 'lecturer', 'class_rep', 'timetabling_admin', 'student'] },
 ];
 
 export function AppSidebar() {
@@ -72,7 +72,8 @@ export function AppSidebar() {
       'cod': 'Head of Department',
       'class_rep': 'Class Rep',
       'lecturer': 'Lecturer',
-      'timetabling_admin': 'Timetabling Admin'
+      'timetabling_admin': 'Timetabling Admin',
+      'student': 'Student'
     };
     return labels[role] || role;
   };

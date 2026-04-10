@@ -37,6 +37,7 @@ export function LecturerDashboard() {
 
   const currentLecturerName = user?.name ?? 'Lecturer';
   const currentDepartment = user?.department ?? 'Academics';
+  const isStudent = user?.role === 'student';
 
   // Get today's day name (Monday, Tuesday, etc.)
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -150,9 +151,11 @@ export function LecturerDashboard() {
             <CardTitle className="text-base font-heading">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Button className="w-full justify-start" variant="outline" onClick={() => navigate('/makeup')}>
-              <BookOpen className="w-4 h-4 mr-2" /> Book Makeup Class
-            </Button>
+            {!isStudent && (
+              <Button className="w-full justify-start" variant="outline" onClick={() => navigate('/makeup')}>
+                <BookOpen className="w-4 h-4 mr-2" /> Book Makeup Class
+              </Button>
+            )}
             <Button className="w-full justify-start" variant="outline" onClick={() => navigate('/notifications')}>
               <Bell className="w-4 h-4 mr-2" /> View Notifications
             </Button>

@@ -19,7 +19,18 @@ const departmentColors: Record<string, string> = {
 };
 
 /** Map a backend TimetableEntry (from /api/timetable) into TimetableSlot shape */
-function mapEntry(e: any): TimetableSlot {
+type TimetableApiEntry = {
+  id: string | number;
+  dayOfWeek?: string;
+  startTime?: string;
+  endTime?: string;
+  courseUnit?: { name?: string; code?: string; department?: string };
+  venue?: { name?: string };
+  lecturer?: { name?: string };
+  expectedStudents?: number;
+};
+
+function mapEntry(e: TimetableApiEntry): TimetableSlot {
   // dayOfWeek comes as "MONDAY" — normalise to "Monday"
   const rawDay = (e.dayOfWeek || '').charAt(0).toUpperCase() + (e.dayOfWeek || '').slice(1).toLowerCase();
   const startHour = e.startTime ? parseInt((e.startTime as string).split(':')[0]) : -1;
@@ -49,9 +60,9 @@ function parseVoucherPayload(payload: unknown) {
       })()
     : payload;
 
-  const data = (parsed && typeof parsed === 'object') ? parsed as Record<string, any> : {};
-  const venueObj = (data.venue && typeof data.venue === 'object') ? data.venue as Record<string, any> : {};
-  const officeObj = (data.equipmentOffice && typeof data.equipmentOffice === 'object') ? data.equipmentOffice as Record<string, any> : {};
+  const data = (parsed && typeof parsed === 'object') ? parsed as Record<string, unknown> : {};
+  const venueObj = (data.venue && typeof data.venue === 'object') ? data.venue as Record<string, unknown> : {};
+  const officeObj = (data.equipmentOffice && typeof data.equipmentOffice === 'object') ? data.equipmentOffice as Record<string, unknown> : {};
 
   return {
     bookingId: String(data.bookingId ?? data.id ?? 'N/A'),
@@ -74,7 +85,7 @@ export default function TimetablePage() {
   useEffect(() => {
     fetchTimetable()
       .then(data => {
-        setSlots((data as any[]).map(mapEntry));
+        setSlots((data as TimetableApiEntry[]).map(mapEntry));
         setError(null);
       })
       .catch(err  => {

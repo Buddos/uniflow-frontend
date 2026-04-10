@@ -25,6 +25,21 @@ export interface EquipmentVoucherResponse {
   payload: unknown;
 }
 
+export interface ApiUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  department?: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  user?: ApiUser;
+  message?: string;
+  error?: string;
+}
+
 /** GET /api/venues */
 export async function fetchVenues(): Promise<Venue[]> {
   const response = await fetch(`${BASE_URL}/venues`, {
@@ -113,7 +128,7 @@ export async function getEquipmentVoucher(bookingId: string | number): Promise<E
 }
 
 /** POST /api/auth/login */
-export async function loginUser(email: string, password: string): Promise<any> {
+export async function loginUser(email: string, password: string): Promise<AuthResponse> {
   const response = await fetch(`${BASE_URL}/auth/login`, {
     credentials: 'include',
     method: 'POST',
@@ -128,7 +143,7 @@ export async function loginUser(email: string, password: string): Promise<any> {
 }
 
 /** POST /api/auth/register */
-export async function registerUser(user: any): Promise<any> {
+export async function registerUser(user: { name: string; email: string; password: string; role: string }): Promise<AuthResponse> {
   const response = await fetch(`${BASE_URL}/auth/register`, {
     credentials: 'include',
     method: 'POST',

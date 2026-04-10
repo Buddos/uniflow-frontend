@@ -36,6 +36,21 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <DashboardLayout>{children}</DashboardLayout>;
 }
 
+function RoleProtectedRoute({
+  children,
+  allowedRoles,
+  redirectTo = '/dashboard',
+}: {
+  children: React.ReactNode;
+  allowedRoles: string[];
+  redirectTo?: string;
+}) {
+  const { isAuthenticated, currentRole } = useAuth();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (currentRole && !allowedRoles.includes(currentRole)) return <Navigate to={redirectTo} replace />;
+  return <DashboardLayout>{children}</DashboardLayout>;
+}
+
 function AppRoutes() {
   const { isAuthenticated } = useAuth();
 
@@ -57,7 +72,7 @@ function AppRoutes() {
       <Route path="/course-requests" element={<ProtectedRoute><CourseRequestsPage /></ProtectedRoute>} />
         <Route path="/courserequest.jsp" element={<ProtectedRoute><CourseRequestsPage /></ProtectedRoute>} />
       <Route path="/trips" element={<ProtectedRoute><TripsPage /></ProtectedRoute>} />
-      <Route path="/makeup" element={<ProtectedRoute><MakeupPage /></ProtectedRoute>} />
+      <Route path="/makeup" element={<RoleProtectedRoute allowedRoles={['admin', 'cod', 'lecturer']}><MakeupPage /></RoleProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
       <Route path="/equipment" element={<ProtectedRoute><EquipmentPage /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
