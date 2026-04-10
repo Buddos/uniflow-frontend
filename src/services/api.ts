@@ -20,6 +20,11 @@ import type {
 // Base URL for Java Servlet backend
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081/api';
 
+export interface EquipmentVoucherResponse {
+  qrCodeBase64: string;
+  payload: unknown;
+}
+
 /** GET /api/venues */
 export async function fetchVenues(): Promise<Venue[]> {
   const response = await fetch(`${BASE_URL}/venues`, {
@@ -95,6 +100,15 @@ export async function bookMakeupClass(booking: { date: string; timeSlot: string;
     body: JSON.stringify(booking)
   });
   if (!response.ok) throw new Error('Failed to book makeup class');
+  return response.json();
+}
+
+/** GET /api/bookings/:id/voucher */
+export async function getEquipmentVoucher(bookingId: string | number): Promise<EquipmentVoucherResponse> {
+  const response = await fetch(`${BASE_URL}/bookings/${bookingId}/voucher`, {
+    credentials: 'include'
+  });
+  if (!response.ok) throw new Error('Failed to fetch equipment voucher');
   return response.json();
 }
 

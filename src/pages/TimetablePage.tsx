@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { fetchTimetable } from '@/services/api';
+import { fetchTimetable, getEquipmentVoucher, type EquipmentVoucherResponse } from '@/services/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 import type { TimetableSlot } from '@/types';
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -36,11 +38,38 @@ function mapEntry(e: any): TimetableSlot {
   };
 }
 
+function parseVoucherPayload(payload: unknown) {
+  const parsed = typeof payload === 'string'
+    ? (() => {
+        try {
+          return JSON.parse(payload);
+        } catch {
+          return null;
+        }
+      })()
+    : payload;
+
+  const data = (parsed && typeof parsed === 'object') ? parsed as Record<string, any> : {};
+  const venueObj = (data.venue && typeof data.venue === 'object') ? data.venue as Record<string, any> : {};
+  const officeObj = (data.equipmentOffice && typeof data.equipmentOffice === 'object') ? data.equipmentOffice as Record<string, any> : {};
+
+  return {
+    bookingId: String(data.bookingId ?? data.id ?? 'N/A'),
+    venue: String(data.venueName ?? venueObj.name ?? data.venue ?? 'N/A'),
+    equipmentOfficeName: String(data.equipmentOfficeName ?? officeObj.name ?? data.resourceHome ?? 'N/A'),
+    scheduledEndTime: String(data.scheduledEndTime ?? data.endTime ?? 'N/A'),
+  };
+}
+
 export default function TimetablePage() {
+  const { user } = useAuth();
   const [slots, setSlots]     = useState<TimetableSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState<string | null>(null);
   const [selected, setSelected] = useState<TimetableSlot | null>(null);
+  const [voucherLoading, setVoucherLoading] = useState(false);
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+  const [voucherData, setVoucherData] = useState<EquipmentVoucherResponse | null>(null);
 
   useEffect(() => {
     fetchTimetable()
@@ -49,11 +78,35 @@ export default function TimetablePage() {
         setError(null);
       })
       .catch(err  => {
-        console.error('Failed to fetch timetable from backend:', err.message);
         setError('Failed to load timetable. Please try again later.');
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const clearVoucherState = () => {
+    setVoucherError(null);
+    setVoucherData(null);
+    setVoucherLoading(false);
+  };
+
+  const closeDialog = () => {
+    setSelected(null);
+    clearVoucherState();
+  };
+
+  const handleGetVoucher = async () => {
+    if (!selected) return;
+    setVoucherLoading(true);
+    setVoucherError(null);
+    try {
+      const response = await getEquipmentVoucher(selected.id);
+      setVoucherData(response);
+    } catch {
+      setVoucherError('Failed to load digital voucher. Please try again.');
+    } finally {
+      setVoucherLoading(false);
+    }
+  };
 
   const getSlot = (day: string, time: string) =>
     slots.find(s => s.day === day && s.timeSlot === time);
@@ -104,7 +157,10 @@ export default function TimetablePage() {
                           <td key={day} className="p-1.5">
                             {slot ? (
                               <button
-                                onClick={() => setSelected(slot)}
+                                onClick={() => {
+                                  clearVoucherState();
+                                  setSelected(slot);
+                                }}
                                 className={`w-full text-left p-2 rounded-md border text-xs transition-all hover:shadow-elevated
                                   ${departmentColors[slot.department] ?? 'bg-secondary text-secondary-foreground border-border'}`}
                               >
@@ -135,13 +191,13 @@ export default function TimetablePage() {
       </div>
 
       {/* Slot detail dialog */}
-      <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
+      <Dialog open={!!selected} onOpenChange={closeDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="font-heading">{selected?.courseUnit}</DialogTitle>
           </DialogHeader>
           {selected && (
-            <div className="space-y-2 text-sm">
+            <div className="space-y-4 text-sm">
               <div className="grid grid-cols-2 gap-2">
                 <div><span className="text-muted-foreground">Code:</span> <span className="font-medium">{selected.courseCode}</span></div>
                 <div><span className="text-muted-foreground">Day:</span> <span className="font-medium">{selected.day}</span></div>
@@ -151,6 +207,51 @@ export default function TimetablePage() {
                 <div><span className="text-muted-foreground">Cohort:</span> <span className="font-medium">{selected.cohortSize} students</span></div>
                 <div className="col-span-2"><span className="text-muted-foreground">Department:</span> <span className="font-medium">{selected.department || '—'}</span></div>
               </div>
+
+              {user?.role === 'class_rep' && (
+                <div className="space-y-3 border-t border-border/70 pt-4">
+                  <Button onClick={handleGetVoucher} disabled={voucherLoading}>
+                    {voucherLoading ? 'Loading Voucher...' : 'Get Equipment Voucher'}
+                  </Button>
+
+                  {voucherError && (
+                    <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                      {voucherError}
+                    </div>
+                  )}
+
+                  {voucherData && (
+                    <div className="space-y-3 rounded-md border border-border/70 bg-secondary/30 p-3">
+                      <div>
+                        <p className="mb-2 font-semibold text-foreground">Digital Voucher QR</p>
+                        <img
+                          src={`data:image/png;base64,${voucherData.qrCodeBase64}`}
+                          alt="Digital equipment voucher QR code"
+                          className="mx-auto w-full max-w-64 rounded-md border border-border bg-white p-2"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        {(() => {
+                          const details = parseVoucherPayload(voucherData.payload);
+                          return (
+                            <>
+                              <p><span className="text-muted-foreground">Booking ID:</span> <span className="font-medium">{details.bookingId}</span></p>
+                              <p><span className="text-muted-foreground">Venue:</span> <span className="font-medium">{details.venue}</span></p>
+                              <p><span className="text-muted-foreground">Equipment Office Name:</span> <span className="font-medium">{details.equipmentOfficeName}</span></p>
+                              <p><span className="text-muted-foreground">Scheduled End Time:</span> <span className="font-medium">{details.scheduledEndTime}</span></p>
+                            </>
+                          );
+                        })()}
+                      </div>
+
+                      <p className="font-bold text-red-700">
+                        Must return equipment within 15 minutes of scheduled end time.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
