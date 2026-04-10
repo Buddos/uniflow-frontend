@@ -141,7 +141,7 @@ export function CodDashboard() {
                   <Badge className="bg-destructive/15 text-destructive border-destructive/30">Rejected</Badge>
                 </div>
                 <p className="mt-3 text-sm text-destructive">{request.rejectionReason || 'No rejection reason provided.'}</p>
-                <Button size="sm" variant="destructive" className="mt-3" onClick={() => navigate('/course-requests')}>
+                <Button size="sm" variant="destructive" className="mt-3" onClick={() => navigate(`/cod/requests/edit/${request.id}`)}>
                   Edit &amp; Resubmit
                 </Button>
               </div>

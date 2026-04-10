@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import type { User, UserRole } from '@/types';
-import { loginUser, registerUser, type AuthResponse, type ApiUser } from '@/services/api';
+import { HttpError, fetchAuthenticatedUser, loginUser, registerUser, type AuthResponse, type ApiUser } from '@/services/api';
 
 declare global {
   interface Window {
@@ -39,6 +39,7 @@ interface AuthContextType {
   user: User | null;
   currentRole?: UserRole;
   isStudent: boolean;
+  authChecking: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   register: (name: string, email: string, password: string, role: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
@@ -50,6 +51,53 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [currentRole, setCurrentRole] = useState<UserRole | undefined>(() => resolveInitialRole());
+  const [authChecking, setAuthChecking] = useState(true);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const verifySession = async () => {
+      try {
+        const sessionUser = await fetchAuthenticatedUser();
+        if (!mounted) return;
+
+        if (sessionUser) {
+          const role = normalizeRole(sessionUser.role) ?? resolveInitialRole() ?? 'lecturer';
+          setUser(toUser(sessionUser, role));
+          setCurrentRole(role);
+          sessionStorage.setItem(ROLE_STORAGE_KEY, role);
+          return;
+        }
+
+        setUser(null);
+      } catch (error) {
+        if (!mounted) return;
+
+        if (error instanceof HttpError && (error.status === 401 || error.status === 403)) {
+          setUser(null);
+          setCurrentRole(undefined);
+          sessionStorage.removeItem(ROLE_STORAGE_KEY);
+        } else {
+          const persistedRole = resolveInitialRole();
+          if (!persistedRole) return;
+          setUser({
+            id: 'session-user',
+            name: 'Session User',
+            email: '',
+            role: persistedRole,
+          });
+        }
+      } finally {
+        if (mounted) setAuthChecking(false);
+      }
+    };
+
+    verifySession();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (user?.role) {
@@ -68,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setCurrentRole(role);
           sessionStorage.setItem(ROLE_STORAGE_KEY, role);
         }
+        setAuthChecking(false);
         return true;
       }
       return false;
@@ -101,10 +150,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setCurrentRole(undefined);
     sessionStorage.removeItem(ROLE_STORAGE_KEY);
+    setAuthChecking(false);
   };
 
   return (
-    <AuthContext.Provider value={{ user, currentRole, isStudent: currentRole === 'student', login, register, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, currentRole, isStudent: currentRole === 'student', authChecking, login, register, logout, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

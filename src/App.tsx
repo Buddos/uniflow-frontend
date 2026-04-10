@@ -31,7 +31,10 @@ import ClassRepFeedbackPage from "@/pages/ClassRepFeedbackPage";
 const queryClient = new QueryClient();
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, authChecking } = useAuth();
+  if (authChecking) {
+    return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Verifying session...</div>;
+  }
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <DashboardLayout>{children}</DashboardLayout>;
 }
@@ -45,7 +48,10 @@ function RoleProtectedRoute({
   allowedRoles: string[];
   redirectTo?: string;
 }) {
-  const { isAuthenticated, currentRole } = useAuth();
+  const { isAuthenticated, currentRole, authChecking } = useAuth();
+  if (authChecking) {
+    return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Verifying session...</div>;
+  }
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (currentRole && !allowedRoles.includes(currentRole)) return <Navigate to={redirectTo} replace />;
   return <DashboardLayout>{children}</DashboardLayout>;
@@ -70,6 +76,9 @@ function AppRoutes() {
       <Route path="/venues" element={<ProtectedRoute><VenuesPage /></ProtectedRoute>} />
       <Route path="/live-map" element={<ProtectedRoute><LiveMapPage /></ProtectedRoute>} />
       <Route path="/course-requests" element={<ProtectedRoute><CourseRequestsPage /></ProtectedRoute>} />
+      <Route path="/course-requests/edit/:id" element={<RoleProtectedRoute allowedRoles={['admin', 'cod']}><CourseRequestsPage /></RoleProtectedRoute>} />
+      <Route path="/cod/requests" element={<RoleProtectedRoute allowedRoles={['admin', 'cod']}><CourseRequestsPage /></RoleProtectedRoute>} />
+      <Route path="/cod/requests/edit/:id" element={<RoleProtectedRoute allowedRoles={['admin', 'cod']}><CourseRequestsPage /></RoleProtectedRoute>} />
         <Route path="/courserequest.jsp" element={<ProtectedRoute><CourseRequestsPage /></ProtectedRoute>} />
       <Route path="/trips" element={<ProtectedRoute><TripsPage /></ProtectedRoute>} />
       <Route path="/makeup" element={<RoleProtectedRoute allowedRoles={['admin', 'cod', 'lecturer']}><MakeupPage /></RoleProtectedRoute>} />

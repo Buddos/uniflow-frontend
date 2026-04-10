@@ -21,6 +21,7 @@ import { HttpError } from '@/services/api';
 import type { Venue } from '@/types';
 
 const LIVE_MAP_REFRESH_EVENT = 'uniflow:refresh-live-map';
+const MAKEUP_DRAFT_KEY = 'uniflow_draft_makeup_booking';
 
 const timeSlots = ['7:00-9:00', '9:00-11:00', '11:00-1:00', '2:00-4:00', '4:00-6:00'];
 
@@ -49,6 +50,30 @@ export default function MakeupPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    const rawDraft = localStorage.getItem(MAKEUP_DRAFT_KEY);
+    if (!rawDraft) return;
+
+    const shouldRestore = window.confirm('We found an unsaved draft. Would you like to restore it?');
+    if (!shouldRestore) {
+      localStorage.removeItem(MAKEUP_DRAFT_KEY);
+      return;
+    }
+
+    try {
+      const parsedDraft = JSON.parse(rawDraft) as { date?: string; timeSlot?: string; selectedVenue?: string };
+      setDate(parsedDraft.date ?? '');
+      setTimeSlot(parsedDraft.timeSlot ?? '');
+      setSelectedVenue(parsedDraft.selectedVenue ?? '');
+    } catch {
+      localStorage.removeItem(MAKEUP_DRAFT_KEY);
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(MAKEUP_DRAFT_KEY, JSON.stringify({ date, timeSlot, selectedVenue }));
+  }, [date, timeSlot, selectedVenue]);
+
   const availableVenues = venues.filter(v => v.status === 'available');
 
   const handleBook = async () => {
@@ -64,6 +89,7 @@ export default function MakeupPage() {
       });
       setConfirmOpen(false);
       toast.success(`Makeup class booked: ${selectedVenue} on ${date} at ${timeSlot}`);
+      localStorage.removeItem(MAKEUP_DRAFT_KEY);
       setDate('');
       setTimeSlot('');
       setSelectedVenue('');

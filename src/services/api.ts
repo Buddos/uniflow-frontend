@@ -155,6 +155,36 @@ export async function loginUser(email: string, password: string): Promise<AuthRe
   return response.json();
 }
 
+/** GET /api/auth/session or /api/auth/me */
+export async function fetchAuthenticatedUser(): Promise<ApiUser | null> {
+  const sessionEndpoints = [`${BASE_URL}/auth/session`, `${BASE_URL}/auth/me`];
+
+  for (const endpoint of sessionEndpoints) {
+    const response = await fetch(endpoint, {
+      credentials: 'include'
+    });
+
+    if (response.ok) {
+      const data = await response.json() as AuthResponse | ApiUser;
+      if ('user' in data) return data.user ?? null;
+      return data;
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      return null;
+    }
+
+    if (response.status === 404) {
+      continue;
+    }
+
+    const errorData = await response.json().catch(() => null) as { message?: string; error?: string } | null;
+    throw new HttpError(response.status, errorData?.message || errorData?.error || 'Failed to verify session');
+  }
+
+  return null;
+}
+
 /** POST /api/auth/register */
 export async function registerUser(user: { name: string; email: string; password: string; role: string }): Promise<AuthResponse> {
   const response = await fetch(`${BASE_URL}/auth/register`, {
