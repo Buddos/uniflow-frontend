@@ -78,7 +78,7 @@ export async function fetchCourseRequests(): Promise<CourseRequest[]> {
 }
 
 /** POST /api/requests */
-export async function submitCourseRequest(request: Omit<CourseRequest, 'id' | 'status' | 'requestDate'>): Promise<CourseRequest> {
+export async function submitCourseRequest(request: Omit<CourseRequest, 'id' | 'status' | 'requestDate' | 'rejectionReason'>): Promise<CourseRequest> {
   const response = await fetch(`${BASE_URL}/requests`, {
     credentials: 'include',
     method: 'POST',

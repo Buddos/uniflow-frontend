@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 import type { CourseRequest, AcademicTrip, Notification, CrossDepartmentRequest } from '@/types';
 
 export function CodDashboard() {
+  const navigate = useNavigate();
   const [courseRequests, setCourseRequests] = useState<CourseRequest[]>([]);
   const [trips, setTrips] = useState<AcademicTrip[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -52,6 +54,7 @@ export function CodDashboard() {
 
   const pending = courseRequests.filter(r => r.status === 'pending').length;
   const accepted = courseRequests.filter(r => r.status === 'accepted').length;
+  const rejectedRequests = courseRequests.filter(r => r.status === 'rejected');
   const crossDeptPending = crossDeptRequests.filter(r => r.status === 'pending').length;
   const tripsCount = trips.length;
   const unread = notifications.filter(n => !n.read).length;
@@ -119,6 +122,32 @@ export function CodDashboard() {
         <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
           No data available yet. Dashboard information will appear here once course requests, trips, and notifications are added.
         </div>
+      )}
+
+      {!loading && rejectedRequests.length > 0 && (
+        <Card className="shadow-card border-l-4 border-l-destructive bg-destructive/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-heading text-destructive">Rejected Requests Need Attention</CardTitle>
+            <p className="text-sm text-destructive/80">These requests were rejected by timetabling and include a reason below.</p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {rejectedRequests.map(request => (
+              <div key={request.id} className="rounded-lg border border-destructive/20 bg-background p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h4 className="font-medium text-foreground">{request.courseUnit}</h4>
+                    <p className="text-xs text-muted-foreground mt-1">{request.requestingDept} → {request.providingDept} • {request.cohortSize} students</p>
+                  </div>
+                  <Badge className="bg-destructive/15 text-destructive border-destructive/30">Rejected</Badge>
+                </div>
+                <p className="mt-3 text-sm text-destructive">{request.rejectionReason || 'No rejection reason provided.'}</p>
+                <Button size="sm" variant="destructive" className="mt-3" onClick={() => navigate('/course-requests')}>
+                  Edit &amp; Resubmit
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">

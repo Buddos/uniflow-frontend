@@ -12,13 +12,27 @@ import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import type { CourseRequest } from '@/types';
 
+type BackendCourseRequest = {
+  id: string | number;
+  courseUnit?: { name?: string; code?: string };
+  comments?: string;
+  requestingDepartment?: string;
+  providingDepartment?: string;
+  expectedStudents?: number;
+  status?: string;
+  requestedAt?: string;
+  rejectionReason?: string;
+  rejection_reason?: string;
+  notes?: string;
+};
+
 const departments = [
   'Computer Science', 'Mathematics', 'Physics', 'Agriculture',
   'Engineering', 'Education', 'Business Administration', 'Chemistry', 'Statistics',
 ];
 
 /** Map backend CourseUnitRequest → frontend CourseRequest */
-function mapRequest(r: any): CourseRequest {
+function mapRequest(r: BackendCourseRequest): CourseRequest {
   return {
     id:             String(r.id),
     courseUnit:     r.courseUnit?.name ?? r.comments ?? '—',
@@ -32,6 +46,8 @@ function mapRequest(r: any): CourseRequest {
     requestDate:    r.requestedAt
       ? String(r.requestedAt).split('T')[0]
       : new Date().toISOString().split('T')[0],
+    rejectionReason: r.rejectionReason ?? r.rejection_reason ?? '',
+    notes: r.notes ?? r.comments ?? '',
   };
 }
 
@@ -47,15 +63,36 @@ export default function CourseRequestsPage() {
   const [error, setError]       = useState<string | null>(null);
   const [open, setOpen]         = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [editingRequest, setEditingRequest] = useState<CourseRequest | null>(null);
 
   // Controlled select values
   const [reqDept, setReqDept] = useState('');
   const [provDept, setProvDept] = useState('');
 
+  const openRequestDialog = (request?: CourseRequest) => {
+    setEditingRequest(request ?? null);
+    if (request) {
+      setReqDept(request.requestingDept);
+      setProvDept(request.providingDept);
+      setOpen(true);
+    } else {
+      setReqDept('');
+      setProvDept('');
+      setOpen(true);
+    }
+  };
+
+  const closeRequestDialog = () => {
+    setOpen(false);
+    setEditingRequest(null);
+    setReqDept('');
+    setProvDept('');
+  };
+
   useEffect(() => {
     fetchCourseRequests()
-      .then(data => setRequests((data as any[]).map(mapRequest)))
-      .catch(err  => setError(err.message))
+      .then(data => setRequests((data as BackendCourseRequest[]).map(mapRequest)))
+      .catch(error => setError(error instanceof Error ? error.message : 'Failed to load requests'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -64,21 +101,22 @@ export default function CourseRequestsPage() {
     const fd = new FormData(e.currentTarget);
     setSubmitting(true);
     try {
+      const notes = String(fd.get('notes') || '');
       const saved = await submitCourseRequest({
         courseUnit:     fd.get('courseUnit') as string,
         courseCode:     fd.get('courseCode') as string,
         requestingDept: reqDept,
         providingDept:  provDept,
         cohortSize:     parseInt(fd.get('cohortSize') as string),
+        notes,
       });
-      setRequests(prev => [mapRequest(saved), ...prev]);
-      setOpen(false);
-      setReqDept('');
-      setProvDept('');
+      setRequests(prev => [mapRequest(saved), ...prev.filter(req => req.id !== editingRequest?.id)]);
+      closeRequestDialog();
       (e.target as HTMLFormElement).reset();
-      toast.success('Course unit request submitted');
-    } catch (err: any) {
-      toast.error('Failed to submit request: ' + err.message);
+      toast.success(editingRequest ? 'Request updated and resubmitted' : 'Course unit request submitted');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      toast.error('Failed to submit request: ' + message);
     } finally {
       setSubmitting(false);
     }
@@ -92,25 +130,25 @@ export default function CourseRequestsPage() {
           <h1 className="text-2xl font-heading font-bold text-foreground">Course Unit Requests</h1>
           <p className="text-muted-foreground text-sm mt-1">Inter-departmental course coordination</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(nextOpen) => (nextOpen ? setOpen(true) : closeRequestDialog())}>
           <DialogTrigger asChild>
-            <Button className="gradient-primary text-primary-foreground">
+            <Button className="gradient-primary text-primary-foreground" onClick={() => openRequestDialog()}>
               <Plus className="w-4 h-4 mr-2" /> New Request
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle className="font-heading">Submit Course Request</DialogTitle>
+              <DialogTitle className="font-heading">{editingRequest ? 'Edit & Resubmit Request' : 'Submit Course Request'}</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form key={editingRequest?.id ?? 'new'} onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label htmlFor="courseUnit">Course Unit</Label>
-                  <Input id="courseUnit" name="courseUnit" required placeholder="e.g. Calculus I" />
+                  <Input id="courseUnit" name="courseUnit" required placeholder="e.g. Calculus I" defaultValue={editingRequest?.courseUnit ?? ''} />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="courseCode">Course Code</Label>
-                  <Input id="courseCode" name="courseCode" required placeholder="e.g. MAT101" />
+                  <Input id="courseCode" name="courseCode" required placeholder="e.g. MAT101" defaultValue={editingRequest?.courseCode ?? ''} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -135,14 +173,18 @@ export default function CourseRequestsPage() {
               </div>
               <div className="space-y-1">
                 <Label htmlFor="cohortSize">Expected Cohort Size</Label>
-                <Input id="cohortSize" name="cohortSize" type="number" required placeholder="200" min={1} />
+                <Input id="cohortSize" name="cohortSize" type="number" required placeholder="200" min={1} defaultValue={editingRequest?.cohortSize ?? ''} />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="notes">Notes</Label>
+                <Input id="notes" name="notes" placeholder="Optional notes for timetabling admin" defaultValue={editingRequest?.notes ?? ''} />
               </div>
               <Button
                 type="submit"
                 disabled={submitting || !reqDept || !provDept}
                 className="w-full gradient-primary text-primary-foreground"
               >
-                {submitting ? 'Submitting…' : 'Submit Request'}
+                {submitting ? 'Submitting…' : editingRequest ? 'Resubmit Request' : 'Submit Request'}
               </Button>
             </form>
           </DialogContent>
@@ -197,7 +239,18 @@ export default function CourseRequestsPage() {
                       </td>
                       <td className="p-3 text-sm text-foreground">{r.cohortSize}</td>
                       <td className="p-3 text-sm text-muted-foreground">{r.requestDate}</td>
-                      <td className="p-3">{statusBadge(r.status)}</td>
+                      <td className="p-3 space-y-2">
+                        {statusBadge(r.status)}
+                        {r.status === 'rejected' && (
+                          <div className="space-y-2 rounded-md border border-destructive/30 bg-destructive/10 p-3">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-destructive">Rejected</p>
+                            <p className="text-sm text-destructive">{r.rejectionReason || 'No rejection reason was provided.'}</p>
+                            <Button size="sm" variant="destructive" onClick={() => openRequestDialog(r)}>
+                              Edit &amp; Resubmit
+                            </Button>
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))
                 }

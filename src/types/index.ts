@@ -39,6 +39,8 @@ export interface CourseRequest {
   cohortSize: number;
   status: 'pending' | 'accepted' | 'rejected';
   requestDate: string;
+  rejectionReason?: string;
+  notes?: string;
 }
 
 export interface AcademicTrip {

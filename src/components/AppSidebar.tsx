@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useState } from 'react';
 import {
   LayoutDashboard, Calendar, Building2, Map, FileText,
   Plane, BookOpen, Bell, Wrench, LogOut, GraduationCap,
@@ -5,6 +6,10 @@ import {
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useAuth } from '@/contexts/AuthContext';
+import { Badge } from '@/components/ui/badge';
+import { fetchCourseRequests } from '@/services/api';
+import { useRealtimeRequests } from '@/hooks/useRealtimeUpdates';
+import { useNavigate } from 'react-router-dom';
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -53,8 +58,34 @@ const navItems: NavItem[] = [
 
 export function AppSidebar() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
+  const [rejectedCount, setRejectedCount] = useState(0);
+
+  const refreshRejectedCount = useCallback(() => {
+    if (!user || (user.role !== 'cod' && user.role !== 'admin')) {
+      setRejectedCount(0);
+      return;
+    }
+
+    fetchCourseRequests()
+      .then(requests => {
+        const relevant = user.role === 'cod' && user.department
+          ? requests.filter(request => request.requestingDept === user.department)
+          : requests;
+        setRejectedCount(relevant.filter(request => request.status === 'rejected').length);
+      })
+        .catch(() => setRejectedCount(0));
+      }, [user]);
+
+  useEffect(() => {
+    refreshRejectedCount();
+  }, [refreshRejectedCount]);
+
+  useRealtimeRequests(() => {
+    refreshRejectedCount();
+  });
 
   const filteredItems = navItems.filter(item => user && item.roles.includes(user.role));
   
@@ -119,6 +150,18 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-3">
+        {rejectedCount > 0 && user?.role === 'cod' && (
+          <button
+            onClick={() => navigate('/course-requests')}
+            className="mb-2 flex w-full items-center justify-between rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/15 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <Bell className="w-4 h-4 shrink-0" />
+              Request Rejections
+            </span>
+            <Badge className="bg-destructive text-destructive-foreground">{rejectedCount}</Badge>
+          </button>
+        )}
         {!collapsed && user && (
           <div className="px-2 py-2 mb-2">
             <p className="text-sm font-medium text-sidebar-foreground truncate">{user.name}</p>
