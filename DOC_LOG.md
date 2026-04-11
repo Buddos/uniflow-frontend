@@ -10,8 +10,8 @@ Push: completed
 
 ## 2026-04-11
 Action: Added equipment and timetable JSP views
-Status: In progress
+Status: Completed
 Changes: Created JSP/JSTL equipment and timetable views with available equipment listings, QR voucher images, 110% buffer checks, and a registrar-only finalize semester action.
 Files: src/main/webapp/WEB-INF/jsp/equipment.jsp; src/main/webapp/WEB-INF/jsp/timetable.jsp
-Commit: pending
+Commit: e04a453
 Push: pending
