@@ -32,6 +32,45 @@
         </c:forEach>
       </div>
 
+      <section class="shadow-card rounded-lg border border-border bg-card p-4 space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <h2 class="text-base font-heading font-semibold">Role Hub</h2>
+            <p class="text-sm text-muted-foreground">Quick actions for your current role</p>
+          </div>
+          <c:if test="${not empty unreadNotificationCount && unreadNotificationCount > 0}">
+            <span class="rounded-full bg-destructive px-2 py-1 text-xs font-bold text-destructive-foreground">${unreadNotificationCount} Notifications</span>
+          </c:if>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+          <c:if test="${user.role == 'TIMETABLING_ADMIN'}">
+            <a href="${pageContext.request.contextPath}/timetable" class="rounded-lg border border-border bg-secondary/30 p-4 hover:bg-secondary/50 transition-colors">
+              <p class="text-xs uppercase tracking-wide text-muted-foreground">Registrar</p>
+              <p class="mt-1 font-heading font-semibold text-foreground">Finalize</p>
+            </a>
+          </c:if>
+          <c:if test="${user.role == 'COD'}">
+            <a href="${pageContext.request.contextPath}/course-requests" class="rounded-lg border border-border bg-secondary/30 p-4 hover:bg-secondary/50 transition-colors">
+              <p class="text-xs uppercase tracking-wide text-muted-foreground">COD</p>
+              <p class="mt-1 font-heading font-semibold text-foreground">Handshake</p>
+            </a>
+          </c:if>
+          <c:if test="${user.role == 'LECTURER'}">
+            <a href="${pageContext.request.contextPath}/live-map" class="rounded-lg border border-border bg-secondary/30 p-4 hover:bg-secondary/50 transition-colors">
+              <p class="text-xs uppercase tracking-wide text-muted-foreground">Lecturer</p>
+              <p class="mt-1 font-heading font-semibold text-foreground">Release Venue</p>
+            </a>
+          </c:if>
+          <c:if test="${user.role == 'STUDENT'}">
+            <a href="${pageContext.request.contextPath}/live-map" class="rounded-lg border border-border bg-secondary/30 p-4 hover:bg-secondary/50 transition-colors">
+              <p class="text-xs uppercase tracking-wide text-muted-foreground">Student</p>
+              <p class="mt-1 font-heading font-semibold text-foreground">Live Map</p>
+            </a>
+          </c:if>
+        </div>
+      </section>
+
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <section class="shadow-card rounded-lg border border-border bg-card p-4">
           <div class="flex items-center justify-between mb-3">

@@ -30,12 +30,12 @@
       </div>
     </div>
     <div class="flex items-center gap-3">
-      <button type="button" class="relative p-2 rounded-md hover:bg-secondary transition-colors" aria-label="Notifications">
+      <a href="${pageContext.request.contextPath}/notifications" class="relative inline-flex items-center justify-center rounded-md p-2 hover:bg-secondary transition-colors" aria-label="Notifications">
         <span class="inline-flex h-5 w-5 items-center justify-center text-muted-foreground">🔔</span>
         <c:if test="${not empty unreadNotificationCount && unreadNotificationCount > 0}">
           <span class="absolute -top-0.5 -right-0.5 w-4 h-4 text-[10px] font-bold rounded-full bg-destructive text-destructive-foreground flex items-center justify-center">${unreadNotificationCount}</span>
         </c:if>
-      </button>
+      </a>
       <div class="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
         ${not empty currentUser.name ? currentUser.name.charAt(0) : 'U'}
       </div>

@@ -15,3 +15,11 @@ Changes: Created JSP/JSTL equipment and timetable views with available equipment
 Files: src/main/webapp/WEB-INF/jsp/equipment.jsp; src/main/webapp/WEB-INF/jsp/timetable.jsp
 Commit: e04a453
 Push: pending
+
+## 2026-04-11
+Action: Added notification and feedback JSP views
+Status: In progress
+Changes: Updated the shared navigation and header with notification access, added a notifications JSP, added a student feedback JSP with a servlet-backed form, and expanded the dashboard into a role-based hub.
+Files: src/main/webapp/WEB-INF/jsp/common/header.jsp; src/main/webapp/WEB-INF/jsp/common/nav.jsp; src/main/webapp/WEB-INF/jsp/dashboard.jsp; src/main/webapp/WEB-INF/jsp/notifications.jsp; src/main/webapp/WEB-INF/jsp/feedback.jsp
+Commit: pending
+Push: pending

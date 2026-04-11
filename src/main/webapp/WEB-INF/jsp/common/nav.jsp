@@ -84,6 +84,11 @@
           <span class="ml-auto rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground">${unreadNotificationCount}</span>
         </c:if>
       </a>
+      <c:if test="${currentRole == 'STUDENT'}">
+        <a href="${pageContext.request.contextPath}/feedback" class="mt-2 flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground hover:bg-sidebar-accent/50 transition-colors">
+          <span>▣</span><span>Feedback</span>
+        </a>
+      </c:if>
     </div>
   </div>
 
